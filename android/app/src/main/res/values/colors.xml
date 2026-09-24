@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Norcha cream, matching norchaprint.com's theme-color #F8F4EE -->
+    <color name="norcha_cream">#F8F4EE</color>
+</resources>
