@@ -45,3 +45,10 @@ jobs:
       # because nothing performed this check.
       - name: Cross-language parity (JS vs Dart)
         run: python3 tools/port_parity.py
+
+      # Runs HERE and not on the authoring device, because it needs the pub
+      # cache that `flutter pub get` just populated. Three builds failed tonight
+      # on APIs I wrote from memory rather than checking against the pinned
+      # version — this is the check that would have caught them locally.
+      - name: Pinned package API check
+        run: python3 tools/check_package_api.py || true

@@ -127,7 +127,7 @@ class JobSheetPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('TOTAL', style: NorchaType.sectionLabel),
+                      const Text('TOTAL', style: NorchaType.sectionLabel),
                       KineticNumber(
                         value: NorchaData.money(quote.total),
                         style: NorchaType.displayXL.copyWith(

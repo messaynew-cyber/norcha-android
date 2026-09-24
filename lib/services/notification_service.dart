@@ -98,6 +98,13 @@ class NotificationService {
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        // Required by flutter_local_notifications 17.x. On Android the date is
+        // always interpreted in the device's own timezone, so this only affects
+        // iOS — but the parameter is not optional and omitting it fails the
+        // build. Declared explicitly rather than guessed from a newer version's
+        // API, which is how withValues() broke the earlier build.
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
         payload: r.occasionId,
       );
       count++;
