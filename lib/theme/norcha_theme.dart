@@ -285,11 +285,11 @@ ThemeData buildNorchaTheme() {
       thickness: 0,
       space: 0,
     ),
-    snackBarTheme: SnackBarThemeData(
+    snackBarTheme: const SnackBarThemeData(
       backgroundColor: NorchaPalette.raisedHigh,
       contentTextStyle: NorchaType.body,
       behavior: SnackBarBehavior.floating,
-      shape: const RoundedRectangleBorder(borderRadius: NorchaShape.card),
+      shape: RoundedRectangleBorder(borderRadius: NorchaShape.card),
     ),
   );
 }

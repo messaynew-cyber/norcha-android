@@ -32,7 +32,6 @@ class _QuotePageState extends State<QuotePage> {
   String _family = 'prints';
   late String _sizeKey = NorchaData.products[_family]!.sizes.first.key;
   int _qty = 1;
-  int _lastPct = 0;
 
   Product get _product => NorchaData.products[_family]!;
   Quote get _quote => NorchaData.quote(_family, _sizeKey, _qty)!;
@@ -42,7 +41,6 @@ class _QuotePageState extends State<QuotePage> {
       _family = family;
       _sizeKey = NorchaData.products[family]!.sizes.first.key;
       _qty = 1;
-      _lastPct = 0;
     });
   }
 
@@ -68,7 +66,7 @@ class _QuotePageState extends State<QuotePage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bulk price unlocked — ${now}% off',
+                    'Bulk price unlocked — $now% off',
                     style: NorchaType.bodySmall.copyWith(
                       color: NorchaPalette.textPrimary,
                     ),
@@ -81,7 +79,6 @@ class _QuotePageState extends State<QuotePage> {
     } else {
       HapticFeedback.selectionClick();
     }
-    _lastPct = now;
   }
 
   Future<void> _sendOnWhatsApp() async {
@@ -455,11 +452,11 @@ class _TheSum extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Text('THE SUM', style: NorchaType.sectionLabel),
-              const SizedBox(width: 10),
-              const Expanded(child: Hairline()),
+              SizedBox(width: 10),
+              Expanded(child: Hairline()),
             ],
           ),
           const SizedBox(height: 18),
