@@ -16,6 +16,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/pricing.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/gold_button.dart';
+import '../deadlines/deadline_card.dart';
 import '../../widgets/gold_sheet.dart';
 import '../../widgets/kinetic_number.dart';
 import 'product_carousel.dart';
@@ -173,6 +174,12 @@ class _QuotePageState extends State<QuotePage> {
                               'collected the same day where we can.',
                               style: NorchaType.bodySmall.copyWith(height: 1.5),
                             ),
+                            // The deadline card places itself only when an
+                            // Ethiopian occasion is genuinely close. Today
+                            // matters to whether you can order, so it sits
+                            // above the choosing rather than at the bottom.
+                            const SizedBox(height: 18),
+                            DeadlineStrip(now: DateTime.now()),
                           ],
                         ),
                       ),
