@@ -11,8 +11,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../core/pricing.dart';
-import '../features/quote/quote_page.dart';
+import 'core/pricing.dart';
+import 'features/quote/quote_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

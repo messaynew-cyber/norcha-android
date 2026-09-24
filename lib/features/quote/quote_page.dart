@@ -7,7 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../app/main.dart';
+import '../../main.dart';
 import '../../core/pricing.dart';
 
 class QuotePage extends StatefulWidget {

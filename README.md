@@ -96,3 +96,10 @@ with a compile error attached.
 
 Both were caught by `flutter analyze` running **before** the build. That is why
 analysis is a gate and not an afterthought.
+
+**3. The entry point must be `lib/main.dart`.**
+Flutter's build looks there by default and nowhere else. A tree organised by
+feature is fine, but the door has to stay where the toolchain expects it —
+`flutter build` failed with `Target file "lib/main.dart" not found` while
+analysis and tests passed happily, because only the build resolves the entry
+point.
