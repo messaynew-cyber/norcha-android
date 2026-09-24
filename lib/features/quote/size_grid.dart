@@ -108,8 +108,12 @@ class _Swatch extends StatelessWidget {
                 height: 78,
                 child: Center(
                   child: Container(
-                      width: (78 * aspect).clamp(20.0, 62.0),
-                      height: (78).clamp(20.0, 78.0),
+                      // .toDouble() is not decoration: num.clamp() returns num,
+                      // and Dart will not narrow it to double implicitly. An
+                      // explicit conversion is the honest way to say 'this is a
+                      // double', rather than a cast that could hide a real bug.
+                      width: (78 * aspect).clamp(20.0, 62.0).toDouble(),
+                      height: (78.0).clamp(20.0, 78.0).toDouble(),
                       decoration: BoxDecoration(
                         color: PaperPalette.sheet,
                         border: Border.all(
