@@ -32,5 +32,13 @@ jobs:
       - run: flutter pub get
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
-      - name: Parity tests
+      - name: Parity tests (Dart)
         run: flutter test --reporter expanded
+
+      # The Dart tests prove the Dart. They CANNOT prove the Dart still agrees
+      # with the website it was ported from. This does — it parses the JS,
+      # runs it with node, and compares constants, decision thresholds and
+      # computed dates against the Dart source. Fasika was a week out for years
+      # because nothing performed this check.
+      - name: Cross-language parity (JS vs Dart)
+        run: python3 tools/port_parity.py
