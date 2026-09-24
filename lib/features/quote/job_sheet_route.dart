@@ -86,7 +86,7 @@ class JobSheetPage extends StatelessWidget {
                     color: NorchaPalette.textSecondary,
                   ),
                   const Spacer(),
-                  Text('QUOTE', style: NorchaType.sectionLabel),
+                  const Text('QUOTE', style: NorchaType.sectionLabel),
                   const SizedBox(width: 10),
                   Text(_reference,
                       style: NorchaType.mono.copyWith(
@@ -98,7 +98,7 @@ class JobSheetPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(22, 12, 22, 30),
                 children: [
-                  Text('Your quote', style: NorchaType.display),
+                  const Text('Your quote', style: NorchaType.display),
                   const SizedBox(height: 8),
                   Text(
                     'Show this at the counter or send it to us on WhatsApp. '
@@ -115,9 +115,11 @@ class JobSheetPage extends StatelessWidget {
                   _line('Subtotal', NorchaData.money(quote.gross),
                       struck: quote.pct > 0),
                   if (quote.pct > 0)
-                    _line('Bulk rate', '− ${NorchaData.money(quote.discount)}',
-                        accent: NorchaPalette.success,
-                        label: 'Bulk rate — ${quote.pct}% off'),
+                    _line(
+                      'Bulk rate — ${quote.pct}% off',
+                      '− ${NorchaData.money(quote.discount)}',
+                      accent: NorchaPalette.success,
+                    ),
                   const SizedBox(height: 16),
                   const Hairline(opacity: 0.28),
                   const SizedBox(height: 18),

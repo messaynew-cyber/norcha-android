@@ -111,11 +111,11 @@ class ProductDetailPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 28),
-                  Row(
+                  const Row(
                     children: [
                       Text('AVAILABLE SIZES', style: NorchaType.sectionLabel),
-                      const SizedBox(width: 10),
-                      const Expanded(child: Hairline()),
+                      SizedBox(width: 10),
+                      Expanded(child: Hairline()),
                     ],
                   ),
                   const SizedBox(height: 14),
