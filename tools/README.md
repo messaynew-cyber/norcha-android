@@ -64,3 +64,28 @@ recorded at the site of the fix, but in summary:
 **The pattern in all three: the harness itself gave false readings.** A test
 that cries wolf is worse than no test, because it teaches you to ignore it.
 When the harness disagrees, check the harness before "fixing" the code.
+
+
+---
+
+## False positives found in this harness (updated 2026-09-25)
+
+While extending it to cover the delivery engine, the harness raised **six**
+disagreements that were all its own bugs. None were real. Recorded because a
+test that cries wolf is worse than no test — it teaches you to ignore it.
+
+| # | Harness said | Truth |
+|---|---|---|
+| 1 | `mothersday` missing from Dart | single-quote-only regex; Dart had it double-quoted |
+| 2 | normalising `"`→`'` would fix #1 | it made it worse — `'Mother's Day'` ends at the apostrophe |
+| 3 | horizon 90 vs 75 | read `upcoming()`'s default instead of `current()`'s |
+| 4 | Dart cut-off not 16 | looked for `cutoffHour = 16`; Dart writes `{int cutoffHour = 16}` |
+| 5 | JS Amharic months not found | searched forward from the bare word `MONTHS`, which matches a *later reference* — the array sits before the marker |
+| 6 | JS Amharic months still not found | JS writes `am:` unquoted in an object literal; Dart writes `'am':`. The regex demanded quotes on both |
+
+**The rule this earns:** when the harness disagrees, check the harness before
+the code. Six times out of six, it was the harness.
+
+**And a second rule, learned the hard way:** do not generate quote-containing
+Python by concatenating quoted strings. It failed five times on one line. Write
+the fragment to a file and read it back.

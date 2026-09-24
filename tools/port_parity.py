@@ -213,6 +213,80 @@ for y, want in published.items():
     check(f"{y}: JS matches published ({want})", got_js == want, f"got {got_js}")
     check(f"{y}: DART matches published ({want})", got_py == want, f"got {got_py}")
 
+
+
+# ------------------------------------------------------------------- DELIVERY
+# Same treatment for the delivery engine: it decides whether the shop can hit a
+# customer's date, so a drift between app and site is a broken promise, not a
+# cosmetic difference.
+DART_DELIV = ROOT / "lib" / "core" / "delivery.dart"
+JS_DELIV = ROOT / "tools" / "vendor" / "norcha-delivery.js"
+
+if DART_DELIV.exists() and JS_DELIV.exists():
+    print("\nDELIVERY — rules and constants")
+    ddel = DART_DELIV.read_text()
+    jdel = JS_DELIV.read_text()
+
+    # Cut-off hour. Dart uses a named default: {int cutoffHour = 16}.
+    # JS uses: cutoffHour === undefined ? 16 : cutoffHour.
+    # Match each on its own terms — normalising whitespace and hoping produced
+    # a false positive on the first run.
+    check("Dart default cut-off is 16",
+          re.search(r"cutoffHour\s*=\s*16", ddel) is not None,
+          "no 'cutoffHour = 16' in delivery.dart")
+    check("JS default cut-off is 16",
+          re.search(r"\?\s*16\s*:", jdel) is not None,
+          "no '? 16 :' in norcha-delivery.js")
+
+    # Sunday rule must exist on both sides.
+    check("Dart skips Sundays", "DateTime.sunday" in ddel)
+    check("JS skips Sundays", "getDay()" in jdel)
+
+    # The three refusal reasons must be the SAME STRINGS — a customer told
+    # "too soon" in the app and "past" on the site is the same bug reported two
+    # ways.
+    for reason in ["past", "sunday", "tooSoon"]:
+        check(f"reason '{reason}' present in both",
+              f"'{reason}'" in ddel and f'"{reason}"' in jdel)
+
+    def am_months(src, marker):
+        """Amharic month array following [marker], single- or double-quoted.
+
+        The Dart uses 'single' and the JS uses "double". A regex written for
+        one style finds nothing in the other and reports a disagreement that
+        does not exist — which happened three times in this file.
+        """
+        i = src.find(marker)
+        if i < 0:
+            return None
+        seg = src[i:i + 1200]
+        # The key may be BARE (JS object literal: `am: [...]`) or QUOTED
+        # (Dart map literal: `'am': [...]`). Requiring quotes on both sides
+        # matched the Dart and silently missed the JS — the fourth false
+        # positive from quote-style assumptions in this harness.
+        pattern = r"['\"]?am['\"]?\s*:\s*\[([^\]]+)\]"
+        m = re.search(pattern, seg)
+        if not m:
+            return None
+        return [x.strip().strip("'").strip('"') for x in m.group(1).split(",")]
+
+    d_months = am_months(ddel, "_months = {")
+    j_months = am_months(jdel, "MONTHS = {")
+    check("Dart and JS agree on all 12 Amharic months",
+          d_months is not None and j_months is not None and d_months == j_months,
+          f"dart={d_months} js={j_months}")
+
+    # The Amharic month strings must also match the HOLIDAY module, since both
+    # render dates to a customer and two spellings of "September" is a bug.
+    hol = ROOT / "lib" / "core" / "holidays.dart"
+    if hol.exists():
+        h_months = am_months(hol.read_text(), "_months = {")
+        check("delivery and holiday modules agree on Amharic months",
+              d_months is not None and h_months is not None and d_months == h_months,
+              f"delivery={d_months} holidays={h_months}")
+else:
+    print("\nSKIP: delivery files not both present")
+
 # ------------------------------------------------------------------- VERDICT
 print(f"\n{checks - len(failures)}/{checks} checks passed")
 if failures:
