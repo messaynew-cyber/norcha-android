@@ -101,56 +101,37 @@ class _Swatch extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Column(
             children: [
-              // A fixed height, not Expanded. The AnimatedContainer above has no
-              // height constraint of its own, so an Expanded here would have
-              // nothing to expand into — and the analyser reports that failure
-              // at the nearest scoped call (LayoutBuilder) rather than at the
-              // real cause. A SizedBox with a deliberate height is both correct
-              // and honest about what the layout is doing.
+              // The sample swatch. Plain Container, explicit size, no
+              // LayoutBuilder and no Expanded — the grid tile already has
+              // bounded dimensions, so re-measuring inside it was redundant.
               SizedBox(
                 height: 78,
                 child: Center(
-                  // The paper sample itself — cream stock on kraft, with a cut
-                  // edge and a shadow, so it reads as a physical offcut.
-                  LayoutBuilder(
-                    builder: (context, c) {
-                      const maxH = 62.0;
-                      final maxW = c.maxWidth * 0.6;
-                      var w = maxH * aspect;
-                      var h = maxH;
-                      if (w > maxW) {
-                        w = maxW;
-                        h = maxW / aspect;
-                      }
-                      return AnimatedContainer(
-                        duration: PaperMotion.medium,
-                        curve: Curves.easeOutCubic,
-                        width: w,
-                        height: h,
-                        decoration: BoxDecoration(
-                          color: PaperPalette.sheet,
-                          border: Border.all(
-                            color: selected
-                                ? PaperPalette.rustDeep
-                                : PaperPalette.ruleStrong,
-                            width: 1,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x22000000),
-                              blurRadius: 1,
-                              offset: Offset(0, 1),
-                            ),
-                            BoxShadow(
-                              color: Color(0x10000000),
-                              blurRadius: 6,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
+                  child: Container(
+                      width: (78 * aspect).clamp(20.0, 62.0),
+                      height: (78).clamp(20.0, 78.0),
+                      decoration: BoxDecoration(
+                        color: PaperPalette.sheet,
+                        border: Border.all(
+                          color: selected
+                              ? PaperPalette.rustDeep
+                              : PaperPalette.ruleStrong,
+                          width: 1,
                         ),
-                      );
-                    },
-                  ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x22000000),
+                            blurRadius: 1,
+                            offset: Offset(0, 1),
+                          ),
+                          BoxShadow(
+                            color: Color(0x10000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                    ),
                 ),
               ),
               const SizedBox(height: 8),
