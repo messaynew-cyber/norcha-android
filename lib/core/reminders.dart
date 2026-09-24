@@ -88,15 +88,22 @@ class ReminderPlanner {
     for (final offset in offsets) {
       final fireAt = occasion.orderBy.subtract(Duration(days: offset));
 
-      // Do not schedule into the past. If today is already the order-by day,
-      // only the same-day reminder is still useful.
-      if (_isBeforeToday(fireAt, now)) continue;
+      // Skip only if the fire MOMENT has already passed — not if the DAY is
+      // today. A 09:30 reminder checked at 08:00 is still in the future and is
+      // exactly the one that matters most: the last day to order.
+      //
+      // The previous version skipped same-day entirely, which contradicted its
+      // own comment and silently dropped the most valuable reminder of the
+      // three. The test caught it.
+      final fireMoment = DateTime(
+          fireAt.year, fireAt.month, fireAt.day, fireHour, fireMinute);
+      if (!fireMoment.isAfter(now)) continue;
 
       final m = _messageFor(offset, occasion, lang);
       out.add(Reminder(
         id: idFor(occasion.id, offset),
         occasionId: occasion.id,
-        fireAt: DateTime(fireAt.year, fireAt.month, fireAt.day, 9, 30),
+        fireAt: fireMoment,
         title: m.$1,
         body: m.$2,
       ));
@@ -110,17 +117,7 @@ class ReminderPlanner {
   static const int fireHour = 9;
   static const int fireMinute = 30;
 
-  static bool _isBeforeToday(DateTime d, DateTime now) {
-    final a = DateTime(d.year, d.month, d.day);
-    final b = DateTime(now.year, now.month, now.day);
-    // NOT `a == b`. DateTime does not override ==, so comparing two DateTime
-    // objects tests IDENTITY, not the instant they represent — this silently
-    // returned false for equal days. Compare the parsed components instead.
-    // (Same class of bug as num.clamp() not narrowing: correct-looking code,
-    // wrong for a reason nobody checked.)
-    final sameDay = a.year == b.year && a.month == b.month && a.day == b.day;
-    return a.isBefore(b) || sameDay;
-  }
+
 
   /// Title and body for a given offset. Uses NorchaHolidays.message so the app
   /// never states a deadline differently from the website.

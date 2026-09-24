@@ -37,11 +37,26 @@ void main() {
       }
     });
 
-    test('crossing a Sunday takes 2 extra calendar days', () {
-      // Fri 25 Sep 2026 + 1 working day = Mon 28 Sep (skipping Sun 27).
+    test('SATURDAY IS A WORKING DAY — the shop trades six days', () {
+      // I originally expected Mon 28 Sep here, assuming a Mon-Fri week. Wrong:
+      // addWorkingDays skips SUNDAYS ONLY, which is what the website does and
+      // what the shop actually does. So Fri + 1 = Sat 26 Sep.
+      //
+      // Verified against the calendar, not against my memory of how weeks work:
+      // 25 Sep 2026 is a Friday, 26 is Saturday, 27 is Sunday.
       final fri = DateTime.utc(2026, 9, 25);
       expect(fri.weekday, DateTime.friday);
       final ready = NorchaDelivery.addWorkingDays(fri, 1);
+      expect(ready, DateTime.utc(2026, 9, 26));
+      expect(ready.weekday, DateTime.saturday);
+    });
+
+    test('a Sunday IS skipped, and costs one extra calendar day', () {
+      // Sat + 1 working day must land on Monday, because Sunday is the only
+      // day excluded.
+      final sat = DateTime.utc(2026, 9, 26);
+      expect(sat.weekday, DateTime.saturday);
+      final ready = NorchaDelivery.addWorkingDays(sat, 1);
       expect(ready, DateTime.utc(2026, 9, 28));
       expect(ready.weekday, DateTime.monday);
     });
@@ -84,8 +99,18 @@ void main() {
       expect(NorchaDelivery.earliestReady(now, 0), DateTime.utc(2026, 9, 25));
     });
 
-    test('after cut-off on a Friday rolls past the weekend to Monday', () {
+    test('after cut-off on a Friday rolls to SATURDAY, not Monday', () {
+      // Same correction: production restarts the next WORKING day, and Saturday
+      // is a working day. Expecting Monday assumed a Mon-Fri week the shop does
+      // not keep.
       final now = DateTime.utc(2026, 9, 25, 17); // Fri after cut-off
+      final ready = NorchaDelivery.earliestReady(now, 0);
+      expect(ready.weekday, DateTime.saturday);
+      expect(ready, DateTime.utc(2026, 9, 26));
+    });
+
+    test('after cut-off on a SATURDAY rolls to Monday', () {
+      final now = DateTime.utc(2026, 9, 26, 17); // Sat after cut-off
       final ready = NorchaDelivery.earliestReady(now, 0);
       expect(ready.weekday, DateTime.monday);
       expect(ready, DateTime.utc(2026, 9, 28));
