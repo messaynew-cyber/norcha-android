@@ -30,7 +30,7 @@ android {
         // This is documented in the plugin's own README. It is here with the
         // explanation because "desugaring" tells a future reader nothing about
         // why it was needed.
-        isCoreLibraryDesugaringEnabled = true
+        coreLibraryDesugaringEnabled = true
     }
     kotlinOptions { jvmTarget = "17" }
 
@@ -66,7 +66,7 @@ android {
 }
 
 dependencies {
-    // The desugaring runtime that pairs with isCoreLibraryDesugaringEnabled.
+    // The desugaring runtime that pairs with coreLibraryDesugaringEnabled.
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
 
