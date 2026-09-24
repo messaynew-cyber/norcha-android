@@ -11,18 +11,25 @@ import 'package:norcha_print/core/holidays.dart';
 
 void main() {
   group('fasika — Orthodox Easter, computed not hardcoded', () {
-    // Known Gregorian dates for Orthodox Easter. If the +7 arithmetic is
-    // changed, these break loudly.
-    test('known years', () {
+    // Known Gregorian dates for Orthodox Easter. These are EXTERNAL facts,
+    // not the output of our own code — which is exactly why they caught the
+    // Julian->Gregorian offset bug on the first CI run.
+    test('known years — verified against published Orthodox calendars', () {
+      // 12 Apr 2026 is confirmed: Orthodox Easter 2026 is 12 April in every
+      // published calendar. The app previously produced 6 Apr (a Monday).
       expect(NorchaHolidays.fasika(2026), DateTime(2026, 4, 12));
       expect(NorchaHolidays.fasika(2027), DateTime(2027, 5, 2));
       expect(NorchaHolidays.fasika(2025), DateTime(2025, 4, 20));
     });
 
-    test('always lands on a Sunday', () {
-      for (var y = 2025; y <= 2035; y++) {
+    test('always lands on a Sunday — THIS TEST FOUND THE BUG', () {
+      // Easter is a Sunday in every tradition. An Easter on a Monday is
+      // arithmetically impossible, which is how this assertion caught the
+      // Julian->Gregorian offset being 7 instead of 13.
+      for (var y = 2025; y <= 2050; y++) {
         expect(NorchaHolidays.fasika(y).weekday, DateTime.sunday,
-            reason: 'Fasika $y must be a Sunday');
+            reason: 'Fasika $y must be a Sunday, got '
+                '${NorchaHolidays.fasika(y)}');
       }
     });
 
@@ -66,12 +73,17 @@ void main() {
   group('upcoming — the ladder', () {
     final from = DateTime(2026, 9, 1); // 26 days before Meskel
 
-    test('Meskel is next on 1 Sep 2026', () {
+    test('Enkutatash is next on 1 Sep 2026, not Meskel', () {
+      // I originally expected Meskel because it is the famous one. Wrong:
+      // Enkutatash is 11 Sep and Meskel is 27 Sep, so Enkutatash is nearer.
+      // The engine was right and the expectation was folklore.
       final list = NorchaHolidays.upcoming(from, horizonDays: 90);
       expect(list, isNotEmpty);
-      expect(list.first.id, 'meskel');
-      expect(list.first.date, DateTime(2026, 9, 27));
-      expect(list.first.days, 26);
+      expect(list.first.id, 'enkutatash');
+      expect(list.first.date, DateTime(2026, 9, 11));
+      expect(list.first.days, 10);
+      // Meskel is still there, two places later.
+      expect(list.any((h) => h.id == 'meskel'), isTrue);
     });
 
     test('results are sorted soonest first', () {
@@ -118,7 +130,7 @@ void main() {
     test('the nearest one wins', () {
       final c = NorchaHolidays.current(DateTime(2026, 9, 1));
       expect(c, isNotNull);
-      expect(c!.id, 'meskel');
+      expect(c!.id, 'enkutatash');
     });
   });
 
@@ -136,6 +148,10 @@ void main() {
     test('days > 1 counts down', () {
       final m = NorchaHolidays.message(at(24), 'en');
       expect(m.message, 'Meskel: order within 24 days');
+    });
+
+    test('the horizon default is 75 days, matching the site', () {
+      expect(NorchaHolidays.defaultHorizon, 75);
     });
 
     test('days == 1 says tomorrow', () {

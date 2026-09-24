@@ -67,10 +67,29 @@ class NorchaHolidays {
 
   /// Orthodox Easter (Fasika), in the Gregorian calendar.
   ///
-  /// Meeus' Julian algorithm, then +7 days to convert Julian → Gregorian and
-  /// a further +7 for the Orthodox reckoning. This is the same arithmetic the
-  /// website uses; do not "simplify" it — the +7s are load-bearing and the
-  /// dates are checked in the parity test against known years.
+  /// 🔴 CORRECTED 2026-09-25. This is NOT the algorithm the website uses.
+  ///
+  /// The website's version computes the date and then adds a flat 7 days,
+  /// commented as "Orthodox is usually +1 week". "Usually" is doing a lot of
+  /// work in that sentence, and it is wrong:
+  ///
+  ///   for 2025-2027 it yields 14 Apr, 6 Apr, 26 Apr — ALL MONDAYS.
+  ///
+  /// Easter is always a Sunday, in every tradition. A date that cannot be a
+  /// Sunday is arithmetically impossible, which is how the parity test caught
+  /// it, and it means the website is currently counting down to the wrong day.
+  ///
+  /// THE REAL ARITHMETIC
+  /// Meeus' formula as written yields a date in the JULIAN calendar. Orthodox
+  /// Easter is that date expressed in the Gregorian calendar — which for
+  /// 1900-2099 means adding 13 days, not 7. The Julian-Gregorian drift is a
+  /// known constant per century; it is 13 in ours and 14 from 2100.
+  ///
+  ///   Julian + 13 →  20 Apr 2025, 12 Apr 2026, 2 May 2027 — all Sundays, and
+  ///   12 Apr 2026 agrees with every published Orthodox Easter calendar.
+  ///
+  /// ⚠️ THE WEBSITE MUST BE FIXED TOO, or the app and the site will disagree
+  /// about Fasika. See HANDOVER.md — this is tracked as an open item.
   static DateTime fasika(int year) {
     final a = year % 4;
     final b = year % 7;
@@ -79,10 +98,18 @@ class NorchaHolidays {
     final e = (2 * a + 4 * b - d + 34) % 7;
     final month = (d + e + 114) ~/ 31;
     final day = ((d + e + 114) % 31) + 1;
-    // NOTE: the JS uses new Date(year, month-1, day) then +7 days. Dart's
-    // DateTime normalises overflow the same way, so this is equivalent.
-    final greg = DateTime(year, month, day);
-    return greg.add(const Duration(days: 7));
+
+    // This is the JULIAN date. Convert to Gregorian.
+    final julian = DateTime(year, month, day);
+    return julian.add(Duration(days: _julianGregorianOffset(year)));
+  }
+
+  /// Days the Julian calendar lags the Gregorian in a given year.
+  /// 13 for 1900-2099, 14 from 2100. Not a magic number — a century table.
+  static int _julianGregorianOffset(int year) {
+    if (year < 1900) return 12;
+    if (year < 2100) return 13;
+    return 14;
   }
 
   static DateTime _startOfDay(DateTime d) => DateTime(d.year, d.month, d.day);
