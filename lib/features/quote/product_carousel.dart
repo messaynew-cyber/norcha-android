@@ -111,7 +111,7 @@ class _ProductCard extends StatelessWidget {
                 : PaperPalette.rust.withOpacity(0.10),
             width: selected ? 1.4 : 1,
           ),
-          boxShadow: selected ? PaperElevation.lifted : PaperElevation.soft,
+          boxShadow: selected ? PaperElevation.lifted : PaperElevation.sheet,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(PaperShape.lg - 1),
@@ -146,7 +146,7 @@ class _ProductCard extends StatelessWidget {
                       style: PaperType.title.copyWith(
                         fontSize: 19,
                         color: selected
-                            ? PaperPalette.rustBright
+                            ? PaperPalette.rustDeep
                             : PaperPalette.ink,
                       ),
                       maxLines: 2,
