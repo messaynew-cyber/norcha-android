@@ -101,7 +101,14 @@ class _Swatch extends StatelessWidget {
           padding: const EdgeInsets.all(10),
           child: Column(
             children: [
-              Expanded(
+              // A fixed height, not Expanded. The AnimatedContainer above has no
+              // height constraint of its own, so an Expanded here would have
+              // nothing to expand into — and the analyser reports that failure
+              // at the nearest scoped call (LayoutBuilder) rather than at the
+              // real cause. A SizedBox with a deliberate height is both correct
+              // and honest about what the layout is doing.
+              SizedBox(
+                height: 78,
                 child: Center(
                   // The paper sample itself — cream stock on kraft, with a cut
                   // edge and a shadow, so it reads as a physical offcut.
