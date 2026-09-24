@@ -27,10 +27,17 @@ const Map<String, String> kFamilyImages = {
 class ProductCarousel extends StatefulWidget {
   final String selected;
   final ValueChanged<String> onSelect;
+
+  /// Tapping the ALREADY-SELECTED card opens its detail page. Two taps is the
+  /// honest interaction here: the first chooses, the second explores. A single
+  /// tap that both selects and navigates would yank the user away mid-choice.
+  final void Function(Product)? onOpen;
+
   const ProductCarousel({
     super.key,
     required this.selected,
     required this.onSelect,
+    this.onOpen,
   });
 
   @override
@@ -72,11 +79,17 @@ class _ProductCarouselState extends State<ProductCarousel> {
           return _ProductCard(
             product: p,
             selected: p.family == widget.selected,
-            onTap: () => _controller.animateToPage(
-              i,
-              duration: NorchaMotion.medium,
-              curve: Curves.easeOutCubic,
-            ),
+            onTap: () {
+              if (p.family == widget.selected && widget.onOpen != null) {
+                widget.onOpen!(p);
+                return;
+              }
+              _controller.animateToPage(
+                i,
+                duration: NorchaMotion.medium,
+                curve: Curves.easeOutCubic,
+              );
+            },
           );
         },
       ),
@@ -119,7 +132,13 @@ class _ProductCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               if (img != null)
-                Image.asset(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: NorchaPalette.raisedHigh))
+                Hero(
+                  tag: 'product-${product.family}',
+                  child: Image.asset(img,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const ColoredBox(color: NorchaPalette.raisedHigh)),
+                )
               else
                 const ColoredBox(color: NorchaPalette.raisedHigh),
               // Scrim so the serif stays legible over any photograph.

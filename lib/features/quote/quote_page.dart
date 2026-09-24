@@ -17,6 +17,8 @@ import '../../core/pricing.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/gold_button.dart';
 import '../deadlines/deadline_card.dart';
+import 'job_sheet_route.dart';
+import 'product_detail_page.dart';
 import '../../widgets/gold_sheet.dart';
 import '../../widgets/kinetic_number.dart';
 import 'product_carousel.dart';
@@ -80,6 +82,36 @@ class _QuotePageState extends State<QuotePage> {
     } else {
       HapticFeedback.selectionClick();
     }
+  }
+
+  /// Open the job sheet as its own route. The quote is the thing the customer
+  /// came for, so it gets a surface rather than being the bottom of a scroll.
+  void _openJobSheet() {
+    final q = _quote;
+    Navigator.of(context).push(JobSheetRoute(
+      child: JobSheetPage(
+        quote: q,
+        familyLabel: _product.label.en,
+        sizeLabel:
+            _product.sizes.firstWhere((x) => x.key == _sizeKey).label,
+        onSend: () {
+          Navigator.of(context).pop();
+          _sendOnWhatsApp();
+        },
+      ),
+    ));
+  }
+
+  /// Open a product's detail page from its carousel card.
+  void _openProduct(Product p) {
+    Navigator.of(context).push(PageRouteBuilder(
+      transitionDuration: NorchaMotion.medium,
+      pageBuilder: (_, __, ___) => ProductDetailPage(
+        product: p,
+        onChoose: () => _selectFamily(p.family),
+      ),
+      transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+    ));
   }
 
   Future<void> _sendOnWhatsApp() async {
@@ -198,6 +230,7 @@ class _QuotePageState extends State<QuotePage> {
                         child: ProductCarousel(
                           selected: _family,
                           onSelect: _selectFamily,
+                          onOpen: _openProduct,
                         ),
                       ),
                     ),
@@ -245,8 +278,14 @@ class _QuotePageState extends State<QuotePage> {
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(22, 34, 22, 0),
-                        child: _TheSum(quote: q, sizeLabel:
-                            _product.sizes.firstWhere((s) => s.key == _sizeKey).label),
+                        child: _TheSum(
+                          quote: q,
+                          sizeLabel: _product
+                              .sizes
+                              .firstWhere((x) => x.key == _sizeKey)
+                              .label,
+                          onOpen: _openJobSheet,
+                        ),
                       ),
                     ),
 
@@ -448,12 +487,18 @@ class _SquareBtn extends StatelessWidget {
 class _TheSum extends StatelessWidget {
   final Quote quote;
   final String sizeLabel;
-  const _TheSum({required this.quote, required this.sizeLabel});
+  final VoidCallback onOpen;
+  const _TheSum({
+    required this.quote,
+    required this.sizeLabel,
+    required this.onOpen,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GoldSheet(
       elevated: true,
+      onTap: onOpen,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
       radius: NorchaShape.lg,
       child: Column(
