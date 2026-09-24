@@ -1,5 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Reminders. POST_NOTIFICATIONS is required at runtime from Android 13.
+         SCHEDULE_EXACT_ALARM is declared but we deliberately use INEXACT
+         scheduling: exact alarms need a special user-granted permission on
+         Android 12+, and a deadline reminder does not justify asking for it.
+         A reminder that fires within the hour is fine; one that never fires
+         because the permission was refused is not. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- Sideload build. Release signing only; no Play upload yet. -->
     <application
         android:label="Norcha Print"

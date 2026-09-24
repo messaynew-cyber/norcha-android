@@ -15,6 +15,9 @@ dependencies:
   intl: any
   url_launcher: ^6.3.0
   google_fonts: ^6.2.1
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+  flutter_timezone: ^1.0.8
   shared_preferences: ^2.3.2
 
 dev_dependencies:
