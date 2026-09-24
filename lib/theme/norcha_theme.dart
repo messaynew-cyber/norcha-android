@@ -1,120 +1,115 @@
 // Norcha Print — design system.
 //
-// DIRECTION: dark editorial luxury.
+// DIRECTION: "THE PAPER SHOP" — the daylight world.
 //
-// WHY THIS REPLACED THE FIRST DESIGN
-// The first build was a correct form. Cream background, chips, radio rows, a
-// stepper. It worked and it looked like a tax return. Nobody shows a friend a
-// well-aligned form.
+// WHY THIS EXISTS
+// The dark editorial version (shipped, approved, preserved on main) is a print
+// studio at night: near-black ground, gold as foil, serif numbers. It is
+// beautiful and it is quiet.
 //
-// What this is instead: a print studio at night. Near-black ground so the
-// images carry, antique gold used like foil — sparingly, always as a hairline
-// or a small mark, never as a big flat fill. Display serif for the numbers
-// because a number set large in a serif reads as *worth* something. Space used
-// as a luxury signal, not wasted.
+// This is its inverse, and deliberately not a variation of it. Cream ground,
+// ink text, the colours of actual printing — kraft, rust, sage. It is built on
+// one thesis: *the app should look like the thing the shop sells.* Feven sells
+// paper. So the interface is paper.
 //
-// MOTION follows Material 3 Expressive (Google I/O 2025, rolled to Android 16):
-// physics-based springs rather than easing curves. Two schemes — standard for
-// utility, expressive for delight. Flutter can do this natively with
-// SpringDescription, so there is no dependency here.
+// That is why this is not "the dark theme, lightened". Inverting a palette
+// produces a washed-out copy. Different ground, different type, different
+// elevation model, different information order.
+//
+// Still Motion-Expressive in behaviour — springs, not curves. The physics of
+// the interaction does not change with the surface.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The palette. Dark ground, gold as accent, everything else restrained.
-class NorchaPalette {
-  // Grounds — near-black, warmed slightly. Pure #000 reads like a switched-off
-  // screen; a trace of warm in the black reads like ink on dark paper.
-  static const void_ = Color(0xFF08070A);
-  static const ink = Color(0xFF0F0E12);
-  static const raised = Color(0xFF161519);
-  static const raisedHigh = Color(0xFF1E1C22);
+/// The palette. Daylight, paper, ink, and the two colours that actually appear
+/// in a print shop: rust from the ink pots, sage from the cutting mat.
+class PaperPalette {
+  // Grounds — this is a stack of paper, not a flat fill.
+  static const ground = Color(0xFFF6F1E7); // the desk
+  static const sheet = Color(0xFFFFFDF8); // a fresh sheet
+  static const kraft = Color(0xFFEADFC8); // the box the prints go in
+  static const kraftDeep = Color(0xFFDCCDB0); // its shadowed edge
 
-  // Gold — the whole personality lives here. Three steps, because using one
-  // gold for both a hairline and a button is how a design starts looking flat.
-  static const gold = Color(0xFFC9A227); // primary — marks, active states
-  static const goldDim = Color(0xFF8A6F1E); // hairlines, dividers
-  static const goldBright = Color(0xFFE8C766); // highlights, the foil moment
+  // Ink — never pure black. Real ink on real paper is warm.
+  static const ink = Color(0xFF1C1814);
+  static const inkSoft = Color(0xFF5A5048);
+  static const inkFaint = Color(0xFF918A7D);
 
-  // Text
-  static const textPrimary = Color(0xFFF4EFE6); // warm white, not #FFF
-  static const textSecondary = Color(0xFFA9A29A);
-  static const textTertiary = Color(0xFF6E6862);
+  // The two accents. Rust is the action colour — it is warm, urgent, and it is
+  // the colour of a pressed stamp. Sage is the quiet one: correct states,
+  // confirmations, the calm half of the shop.
+  static const rust = Color(0xFF9C4A1E);
+  static const rustDeep = Color(0xFF7A3916);
+  static const sage = Color(0xFF6B7355);
+  static const sageLight = Color(0xFF8B9474);
 
-  // Semantic
-  static const success = Color(0xFF7FB069);
-  static const warn = Color(0xFFD98E4A);
-  static const danger = Color(0xFFC4553F);
+  // Rules and edges — printing uses hairlines, not borders.
+  static const rule = Color(0xFFCFC2A8);
+  static const ruleStrong = Color(0xFFB0A184);
+
+  static const warn = Color(0xFFB07A1E);
+  static const danger = Color(0xFFA63A22);
 }
 
-/// Type scale. Display sizes are deliberately large — M3 Expressive leans on
-/// emphasis hierarchy, and a price set at 56pt reads as a different class of
-/// object than the same price at 26pt.
-///
-/// Fonts are Google Fonts (google_fonts package). The website uses Bricolage /
-/// EB Garamond / Outfit; woff2 cannot be loaded by Flutter and converting it
-/// needs brotli, which this ARM64 authoring device cannot install. Same
-/// character, different cut — noted so nobody thinks it is an accident.
-class NorchaType {
-  /// Editorial serif. The display face. Prices, headings, moments.
-  static const displayFamily = 'Playfair Display';
-
-  /// Clean geometric sans. Everything functional.
+/// Type. EB Garamond for display because it is a real book face and the website
+/// already uses it — Garamond on paper is not a stylistic choice, it is the
+/// correct tool. Inter for anything functional, where clarity beats character.
+class PaperType {
+  static const displayFamily = 'EB Garamond';
   static const bodyFamily = 'Inter';
-
-  /// Amharic. Not an afterthought — most of the counter speaks it.
   static const amharicFamily = 'Noto Sans Ethiopic';
 
   static const displayXL = TextStyle(
     fontFamily: displayFamily,
-    fontSize: 56,
-    height: 1.02,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -1.2,
-    color: NorchaPalette.textPrimary,
+    fontSize: 52,
+    height: 1.06,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.4,
+    color: PaperPalette.ink,
   );
 
   static const display = TextStyle(
     fontFamily: displayFamily,
-    fontSize: 38,
-    height: 1.08,
+    fontSize: 34,
+    height: 1.12,
     fontWeight: FontWeight.w600,
-    letterSpacing: -0.6,
-    color: NorchaPalette.textPrimary,
+    color: PaperPalette.ink,
   );
 
   static const title = TextStyle(
     fontFamily: displayFamily,
-    fontSize: 24,
+    fontSize: 23,
     height: 1.2,
     fontWeight: FontWeight.w600,
-    letterSpacing: -0.2,
-    color: NorchaPalette.textPrimary,
+    color: PaperPalette.ink,
   );
 
+  /// Printed small caps. The device that makes a page read as *set* rather than
+  /// typed — a letterpress caption under a plate.
   static const sectionLabel = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 10.5,
     height: 1.0,
-    fontWeight: FontWeight.w600,
-    letterSpacing: 2.4,
-    color: NorchaPalette.textTertiary,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 2.2,
+    color: PaperPalette.inkSoft,
   );
 
   static const body = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 15,
-    height: 1.45,
+    height: 1.5,
     fontWeight: FontWeight.w400,
-    color: NorchaPalette.textPrimary,
+    color: PaperPalette.ink,
   );
 
   static const bodySmall = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 13,
-    height: 1.4,
+    height: 1.45,
     fontWeight: FontWeight.w400,
-    color: NorchaPalette.textSecondary,
+    color: PaperPalette.inkSoft,
   );
 
   static const label = TextStyle(
@@ -122,16 +117,27 @@ class NorchaType {
     fontSize: 14,
     height: 1.2,
     fontWeight: FontWeight.w600,
-    color: NorchaPalette.textPrimary,
+    color: PaperPalette.ink,
   );
 
+  /// Prices are the one place the interface borrows from a ledger: tabular
+  /// figures so a column of numbers aligns, as it would on a printed price list.
   static const price = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 15,
     height: 1.2,
     fontWeight: FontWeight.w600,
     fontFeatures: [FontFeature.tabularFigures()],
-    color: NorchaPalette.textPrimary,
+    color: PaperPalette.ink,
+  );
+
+  static const priceLarge = TextStyle(
+    fontFamily: displayFamily,
+    fontSize: 42,
+    height: 1.05,
+    fontWeight: FontWeight.w600,
+    fontFeatures: [FontFeature.tabularFigures()],
+    color: PaperPalette.ink,
   );
 
   static const mono = TextStyle(
@@ -140,156 +146,144 @@ class NorchaType {
     height: 1.3,
     fontWeight: FontWeight.w500,
     fontFeatures: [FontFeature.tabularFigures()],
-    color: NorchaPalette.textSecondary,
+    color: PaperPalette.inkSoft,
   );
 }
 
-/// Motion. Physics, not curves — Material 3 Expressive's core idea.
-///
-/// A spring that arrives without overshoot feels mechanical. A spring with a
-/// little bounce feels alive. The distinction is the whole point of the update.
-class NorchaMotion {
-  /// Utilitarian movement — things that should not draw attention.
-  static const standard = SpringDescription(
-    mass: 1,
-    stiffness: 500,
-    damping: 35,
-  );
-
-  /// Bouncy. For the moments that should feel good: a quantity changing, a
-  /// selection landing, a sheet opening.
-  static const expressive = SpringDescription(
-    mass: 1,
-    stiffness: 380,
-    damping: 22,
-  );
-
-  /// Snappy, minimal overshoot — for small targets like a tap chip.
-  static const snappy = SpringDescription(
-    mass: 1,
-    stiffness: 700,
-    damping: 42,
-  );
+/// Motion. Unchanged from the dark version on purpose: the physics of a good
+/// interaction does not depend on whether the room is lit.
+class PaperMotion {
+  static const standard = SpringDescription(mass: 1, stiffness: 500, damping: 35);
+  static const expressive = SpringDescription(mass: 1, stiffness: 380, damping: 22);
+  static const snappy = SpringDescription(mass: 1, stiffness: 700, damping: 42);
 
   static const Duration fast = Duration(milliseconds: 180);
   static const Duration medium = Duration(milliseconds: 320);
   static const Duration slow = Duration(milliseconds: 520);
 }
 
-/// Shape. M3 Expressive animates corner radii rather than holding them fixed.
-class NorchaShape {
-  static const double xs = 8;
-  static const double sm = 12;
-  static const double md = 18;
-  static const double lg = 26;
-  static const double xl = 34;
+/// Shape. Squarer than the dark version — paper has corners. A 26px radius on
+/// a cream ground reads as a phone app; a 4px radius reads as a card that was
+/// cut.
+class PaperShape {
+  static const double xs = 2;
+  static const double sm = 4;
+  static const double md = 6;
+  static const double lg = 10;
+  static const double xl = 16;
   static const double pill = 999;
 
   static const card = BorderRadius.all(Radius.circular(md));
-  static const sheet = BorderRadius.vertical(top: Radius.circular(xl));
+  static const sheet = BorderRadius.all(Radius.circular(lg));
   static const chip = BorderRadius.all(Radius.circular(pill));
 }
 
-/// Elevation, done with light rather than shadow — on a near-black ground a
-/// drop shadow is invisible, so depth comes from a lifted surface + a hairline.
-class NorchaElevation {
-  static List<BoxShadow> get soft => [
+/// Elevation. On paper, depth is a *stack*, not a glow: a hard offset shadow
+/// with almost no blur, the way one sheet sits on another. This is the single
+/// biggest departure from the dark theme, where shadows were invisible and
+/// depth came from light.
+class PaperElevation {
+  /// One sheet resting on another. Hard, close, barely blurred.
+  static List<BoxShadow> get sheet => const [
         BoxShadow(
-          color: Colors.black.withOpacity(0.55),
-          blurRadius: 28,
-          offset: const Offset(0, 12),
+          color: Color(0x14000000),
+          blurRadius: 2,
+          offset: Offset(0, 1),
+        ),
+        BoxShadow(
+          color: Color(0x0A000000),
+          blurRadius: 8,
+          offset: Offset(0, 4),
         ),
       ];
 
-  static List<BoxShadow> get lifted => [
+  /// Lifted — a sheet raised off the stack. Still hard-edged.
+  static List<BoxShadow> get lifted => const [
         BoxShadow(
-          color: Colors.black.withOpacity(0.7),
-          blurRadius: 44,
-          offset: const Offset(0, 20),
+          color: Color(0x1F000000),
+          blurRadius: 3,
+          offset: Offset(0, 2),
         ),
         BoxShadow(
-          color: NorchaPalette.gold.withOpacity(0.05),
-          blurRadius: 18,
-          spreadRadius: -4,
+          color: Color(0x12000000),
+          blurRadius: 16,
+          offset: Offset(0, 8),
         ),
       ];
 }
 
-/// Gold hairline. Used everywhere a border would normally go.
-class Hairline extends StatelessWidget {
+/// A printer's rule — a hairline, solid, like a rule drawn with a pen.
+class RuleLine extends StatelessWidget {
   final double opacity;
-  final double? width;
-  const Hairline({super.key, this.opacity = 0.22, this.width});
+  final bool strong;
+  const RuleLine({super.key, this.opacity = 1.0, this.strong = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            NorchaPalette.gold.withOpacity(0),
-            NorchaPalette.gold.withOpacity(opacity),
-            NorchaPalette.gold.withOpacity(opacity),
-            NorchaPalette.gold.withOpacity(0),
-          ],
-          stops: const [0.0, 0.18, 0.82, 1.0],
-        ),
-      ),
+      height: strong ? 1.4 : 1,
+      color: (strong ? PaperPalette.ruleStrong : PaperPalette.rule)
+          .withOpacity(opacity),
     );
   }
 }
 
-/// The app theme. Deliberately minimal: most styling lives on the widgets so
-/// that a component can be understood by reading one file.
-ThemeData buildNorchaTheme() {
+/// The paper edge of a sheet — the faint darker line where a cut was made.
+class PaperEdge extends StatelessWidget {
+  final Widget child;
+  const PaperEdge({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) => child;
+}
+
+ThemeData buildPaperTheme() {
   final base = ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: NorchaPalette.void_,
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: PaperPalette.ground,
   );
 
   return base.copyWith(
-    colorScheme: const ColorScheme.dark(
-      primary: NorchaPalette.gold,
-      onPrimary: NorchaPalette.void_,
-      secondary: NorchaPalette.goldBright,
-      surface: NorchaPalette.ink,
-      onSurface: NorchaPalette.textPrimary,
-      error: NorchaPalette.danger,
+    colorScheme: const ColorScheme.light(
+      primary: PaperPalette.rust,
+      onPrimary: PaperPalette.sheet,
+      secondary: PaperPalette.sage,
+      onSecondary: PaperPalette.sheet,
+      surface: PaperPalette.sheet,
+      onSurface: PaperPalette.ink,
+      error: PaperPalette.danger,
     ),
-    splashFactory: InkSparkle.splashFactory,
+    splashFactory: InkRipple.splashFactory,
     appBarTheme: const AppBarTheme(
-      backgroundColor: NorchaPalette.void_,
+      backgroundColor: PaperPalette.ground,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: NorchaPalette.void_,
-        systemNavigationBarIconBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: PaperPalette.ground,
+        systemNavigationBarIconBrightness: Brightness.dark,
       ),
     ),
     textTheme: const TextTheme(
-      displayLarge: NorchaType.displayXL,
-      headlineMedium: NorchaType.display,
-      titleLarge: NorchaType.title,
-      bodyMedium: NorchaType.body,
-      bodySmall: NorchaType.bodySmall,
-      labelLarge: NorchaType.label,
-    ),
-    dividerTheme: const DividerThemeData(
-      color: Colors.transparent,
-      thickness: 0,
-      space: 0,
+      displayLarge: PaperType.displayXL,
+      headlineMedium: PaperType.display,
+      titleLarge: PaperType.title,
+      bodyMedium: PaperType.body,
+      bodySmall: PaperType.bodySmall,
+      labelLarge: PaperType.label,
     ),
     snackBarTheme: const SnackBarThemeData(
-      backgroundColor: NorchaPalette.raisedHigh,
-      contentTextStyle: NorchaType.body,
+      backgroundColor: PaperPalette.ink,
+      contentTextStyle: TextStyle(
+        fontFamily: PaperType.bodyFamily,
+        fontSize: 14,
+        color: PaperPalette.sheet,
+      ),
       behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: NorchaShape.card),
+      shape: RoundedRectangleBorder(borderRadius: PaperShape.card),
     ),
   );
 }

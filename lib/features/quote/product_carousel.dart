@@ -74,7 +74,7 @@ class _ProductCarouselState extends State<ProductCarousel> {
             selected: p.family == widget.selected,
             onTap: () => _controller.animateToPage(
               i,
-              duration: NorchaMotion.medium,
+              duration: PaperMotion.medium,
               curve: Curves.easeOutCubic,
             ),
           );
@@ -100,28 +100,28 @@ class _ProductCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: NorchaMotion.medium,
+        duration: PaperMotion.medium,
         curve: Curves.easeOutCubic,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(NorchaShape.lg),
+          borderRadius: BorderRadius.circular(PaperShape.lg),
           border: Border.all(
             color: selected
-                ? NorchaPalette.gold
-                : NorchaPalette.gold.withOpacity(0.10),
+                ? PaperPalette.rust
+                : PaperPalette.rust.withOpacity(0.10),
             width: selected ? 1.4 : 1,
           ),
-          boxShadow: selected ? NorchaElevation.lifted : NorchaElevation.soft,
+          boxShadow: selected ? PaperElevation.lifted : PaperElevation.soft,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(NorchaShape.lg - 1),
+          borderRadius: BorderRadius.circular(PaperShape.lg - 1),
           child: Stack(
             fit: StackFit.expand,
             children: [
               if (img != null)
-                Image.asset(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: NorchaPalette.raisedHigh))
+                Image.asset(img, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const ColoredBox(color: PaperPalette.kraft))
               else
-                const ColoredBox(color: NorchaPalette.raisedHigh),
+                const ColoredBox(color: PaperPalette.kraft),
               // Scrim so the serif stays legible over any photograph.
               const DecoratedBox(
                 decoration: BoxDecoration(
@@ -143,11 +143,11 @@ class _ProductCard extends StatelessWidget {
                   children: [
                     Text(
                       product.label.en,
-                      style: NorchaType.title.copyWith(
+                      style: PaperType.title.copyWith(
                         fontSize: 19,
                         color: selected
-                            ? NorchaPalette.goldBright
-                            : NorchaPalette.textPrimary,
+                            ? PaperPalette.rustBright
+                            : PaperPalette.ink,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -155,9 +155,9 @@ class _ProductCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       'from ${NorchaData.money(product.sizes.first.price)}',
-                      style: NorchaType.mono.copyWith(
+                      style: PaperType.mono.copyWith(
                         fontSize: 11.5,
-                        color: NorchaPalette.textSecondary,
+                        color: PaperPalette.inkSoft,
                       ),
                     ),
                   ],
@@ -171,17 +171,17 @@ class _ProductCard extends StatelessWidget {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: NorchaPalette.gold,
+                      color: PaperPalette.rust,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: NorchaPalette.gold.withOpacity(0.5),
+                          color: PaperPalette.rust.withOpacity(0.5),
                           blurRadius: 14,
                         ),
                       ],
                     ),
                     child: const Icon(Icons.check_rounded,
-                        size: 16, color: NorchaPalette.void_),
+                        size: 16, color: PaperPalette.ink),
                   ),
                 ),
             ],

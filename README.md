@@ -1,5 +1,24 @@
 # Norcha Print — Android
 
+> ## 🌿 BRANCH: `theme-paper-shop` — Variation B
+>
+> `main` carries **"The Darkroom"** — near-black, antique gold, Playfair serif.
+> Beautiful, quiet, approved by the Architect. Do not disturb it while comparing.
+>
+> This branch carries **"The Paper Shop"** — cream ground, ink, kraft, EB Garamond.
+> Daylight. It is a *different design language*, not the dark theme lightened:
+> different ground, different display face, different shadow model (a hard-edged
+> stack, not a glow), different corner radii (paper is square), different
+> information order (a job sheet, not a boutique).
+>
+> Both build from the same `lib/core/pricing.dart`. The pricing engine and the
+> parity tests are shared and must stay identical on every branch.
+>
+> **To compare on a phone:** install both APKs. They share `com.norcha.print`,
+> so installing one over the other replaces it — keep the APKs on disk and
+> reinstall whichever you want to look at.
+
+
 Native Flutter app for **Norcha Print**, Bole, Addis Ababa.
 Live prices, Ethiopian holiday deadlines, and a quote calculator that works
 with no internet at all.

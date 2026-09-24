@@ -1,13 +1,18 @@
-// Norcha Print — the quote screen.
+// Norcha Print — the quote screen. THE PAPER SHOP.
 //
-// REBUILT. The first version was a correct form and it looked like a tax
-// return: chips, radio rows, a stepper, a card. This is the version worth
-// showing someone.
+// THE ARGUMENT THIS SCREEN MAKES
+// The dark version says: *we do beautiful work, take your time.* Quiet, gold,
+// after hours.
 //
-// The composition is editorial. A chapter number, a gold hairline, a display
-// serif headline, an image carousel, and then the number — set large, rolling,
-// because a price that moves when you change quantity is doing the selling for
-// you. Space is used as a signal rather than filled.
+// This says: *this is a real print shop and we know paper.* Daylight, kraft and
+// ink, sample swatches, a price list set like a printed one. The customer is
+// standing at a counter being shown stock, not browsing a boutique.
+//
+// Not an inversion of the dark theme — inverting a palette gives you a
+// washed-out copy of the same idea. Different ground, different type
+// (Garamond, a book face), different shadow model (a stack, not a glow),
+// different corners (paper is square), and a layout that reads top-down like a
+// job sheet.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,9 +20,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/pricing.dart';
 import '../../theme/norcha_theme.dart';
-import '../../widgets/gold_button.dart';
-import '../../widgets/gold_sheet.dart';
-import '../../widgets/kinetic_number.dart';
+import '../../widgets/paper_sheet.dart';
+import '../../widgets/stamp_button.dart';
 import 'product_carousel.dart';
 import 'size_grid.dart';
 
@@ -37,6 +41,7 @@ class _QuotePageState extends State<QuotePage> {
   Quote get _quote => NorchaData.quote(_family, _sizeKey, _qty)!;
 
   void _selectFamily(String family) {
+    HapticFeedback.selectionClick();
     setState(() {
       _family = family;
       _sizeKey = NorchaData.products[family]!.sizes.first.key;
@@ -49,8 +54,6 @@ class _QuotePageState extends State<QuotePage> {
     final prev = _quote.pct;
     setState(() => _qty = v);
     final now = _quote.pct;
-    // A tier crossing is a moment — the customer just earned money by ordering
-    // more. Say so, physically.
     if (now > prev) {
       HapticFeedback.mediumImpact();
       ScaffoldMessenger.of(context)
@@ -58,17 +61,17 @@ class _QuotePageState extends State<QuotePage> {
         ..showSnackBar(
           SnackBar(
             duration: const Duration(milliseconds: 2200),
-            backgroundColor: NorchaPalette.raisedHigh,
             content: Row(
               children: [
-                const Icon(Icons.auto_awesome,
-                    size: 17, color: NorchaPalette.goldBright),
+                const Icon(Icons.local_offer_outlined,
+                    size: 17, color: PaperPalette.ground),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Bulk price unlocked — $now% off',
-                    style: NorchaType.bodySmall.copyWith(
-                      color: NorchaPalette.textPrimary,
+                    'Bulk rate applied — $now% off',
+                    style: PaperType.bodySmall.copyWith(
+                      color: PaperPalette.ground,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
@@ -104,217 +107,210 @@ class _QuotePageState extends State<QuotePage> {
   @override
   Widget build(BuildContext context) {
     final q = _quote;
+    final si = _product.sizes.firstWhere((s) => s.key == _sizeKey);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0C0B0F), NorchaPalette.void_],
-            stops: [0.0, 0.55],
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              if (Shop.pricesAreTemporary) const _SampleRibbon(),
-              Expanded(
-                child: CustomScrollView(
-                  slivers: [
-                    // ---------- MASTHEAD ----------
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  'NORCHA',
-                                  style: NorchaType.title.copyWith(
-                                    fontSize: 20,
-                                    letterSpacing: 6.5,
-                                    color: NorchaPalette.goldBright,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text('ፕሪንት',
-                                    style: NorchaType.bodySmall.copyWith(
-                                      fontSize: 13,
-                                      color: NorchaPalette.textTertiary,
-                                    )),
-                                const Spacer(),
-                                Text(
-                                  'ADDIS · BOLE',
-                                  style: NorchaType.mono.copyWith(
-                                    fontSize: 10,
-                                    letterSpacing: 2.0,
-                                    color: NorchaPalette.textTertiary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            const Hairline(opacity: 0.3),
-                            const SizedBox(height: 26),
-                            Text(
-                              'What shall\nwe print?',
-                              style: NorchaType.displayXL.copyWith(
-                                fontSize: 42,
-                                height: 1.04,
+      backgroundColor: PaperPalette.ground,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            if (Shop.pricesAreTemporary) const _UnconfirmedStrip(),
+            Expanded(
+              child: CustomScrollView(
+                slivers: [
+                  // ---------- SHOP PLATE ----------
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                'Norcha',
+                                style: PaperType.display.copyWith(fontSize: 30),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Fine printing, canvases and books — made in Bole, '
-                              'collected the same day where we can.',
-                              style: NorchaType.bodySmall.copyWith(height: 1.5),
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 8),
+                              Text('ፕሪንት',
+                                  style: PaperType.bodySmall.copyWith(
+                                      fontSize: 13)),
+                              const Spacer(),
+                              Text('BOLE · ADDIS',
+                                  style: PaperType.sectionLabel.copyWith(
+                                      fontSize: 9.5)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Text('FINE PRINTING  ·  EST. BOLE',
+                                  style: PaperType.sectionLabel.copyWith(
+                                      fontSize: 9.5,
+                                      color: PaperPalette.rust)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const RuleLine(strong: true),
+                          const SizedBox(height: 26),
+                          Text(
+                            'Choose your\nprint, size and\nquantity.',
+                            style: PaperType.displayXL.copyWith(fontSize: 38),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Photographs, canvases, books and gifts — made in Bole. '
+                            'Prices include the bulk rate automatically; the more '
+                            'you order, the less each one costs.',
+                            style: PaperType.bodySmall.copyWith(height: 1.55),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                       ),
                     ),
+                  ),
 
-                    // ---------- I. THE PIECE ----------
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(22, 34, 22, 14),
-                        child: ChapterHeading(numeral: 'I', label: 'The piece'),
+                  // ---------- 1. STOCK ----------
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 30, 20, 14),
+                      child: PressHeading(numeral: '1.', label: 'What you want printed'),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: ProductCarousel(
+                        selected: _family,
+                        onSelect: _selectFamily,
                       ),
                     ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 22),
-                        child: ProductCarousel(
-                          selected: _family,
-                          onSelect: _selectFamily,
-                        ),
-                      ),
-                    ),
+                  ),
 
-                    // ---------- II. THE SIZE ----------
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(22, 34, 22, 14),
-                        child: ChapterHeading(
-                          numeral: 'II',
-                          label: 'The size',
-                          trailing: 'shown to scale',
-                        ),
+                  // ---------- 2. SIZE ----------
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 30, 20, 14),
+                      child: PressHeading(
+                        numeral: '2.',
+                        label: 'Size',
+                        trailing: 'shown to scale',
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22),
-                      sliver: SliverToBoxAdapter(
-                        child: SizeGrid(
-                          product: _product,
-                          selected: _sizeKey,
-                          onSelect: (k) => setState(() => _sizeKey = k),
-                        ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    sliver: SliverToBoxAdapter(
+                      child: SizeGrid(
+                        product: _product,
+                        selected: _sizeKey,
+                        onSelect: (k) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _sizeKey = k);
+                        },
                       ),
                     ),
+                  ),
 
-                    // ---------- III. THE QUANTITY ----------
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(22, 34, 22, 14),
-                        child: ChapterHeading(numeral: 'III', label: 'How many'),
-                      ),
+                  // ---------- 3. QUANTITY ----------
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(20, 30, 20, 14),
+                      child: PressHeading(numeral: '3.', label: 'How many'),
                     ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 22),
-                        child: _QuantityRow(
-                          qty: _qty,
-                          onSet: _setQty,
-                        ),
-                      ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _QuantityBlock(qty: _qty, onSet: _setQty),
                     ),
+                  ),
 
-                    // ---------- THE SUM ----------
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(22, 34, 22, 0),
-                        child: _TheSum(quote: q, sizeLabel:
-                            _product.sizes.firstWhere((s) => s.key == _sizeKey).label),
+                  // ---------- JOB SHEET ----------
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 30, 20, 0),
+                      child: _JobSheet(
+                        quote: q,
+                        sizeLabel: si.label,
+                        familyLabel: _product.label.en,
                       ),
                     ),
+                  ),
 
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(22, 18, 22, 34),
-                        child: Column(
-                          children: [
-                            GoldButton(
-                              label: 'Send this quote',
-                              icon: Icons.chat_bubble_outline_rounded,
-                              onPressed: _sendOnWhatsApp,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              '${Shop.phone}  ·  ${Shop.hours}',
-                              textAlign: TextAlign.center,
-                              style: NorchaType.mono.copyWith(
-                                fontSize: 11,
-                                color: NorchaPalette.textTertiary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _leadLine(q.lead),
-                              textAlign: TextAlign.center,
-                              style: NorchaType.mono.copyWith(
-                                fontSize: 11,
-                                color: NorchaPalette.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 34),
+                      child: Column(
+                        children: [
+                          StampButton(
+                            label: 'Send this to the shop',
+                            icon: Icons.send_outlined,
+                            onPressed: _sendOnWhatsApp,
+                          ),
+                          const SizedBox(height: 16),
+                          const RuleLine(),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(Shop.phone,
+                                  style: PaperType.mono.copyWith(fontSize: 11.5)),
+                              Text(_leadLine(q.lead),
+                                  style: PaperType.mono.copyWith(fontSize: 11.5)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(Shop.hours,
+                              style: PaperType.mono.copyWith(
+                                  fontSize: 11,
+                                  color: PaperPalette.inkFaint)),
+                        ],
                       ),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                  ],
-                ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   String _leadLine(int days) {
-    if (days == 0) return 'ready the same day — order before ${Shop.cutoffHour}:00';
+    if (days == 0) return 'same day · before ${Shop.cutoffHour}:00';
     if (days == 1) return 'ready in 1 working day';
     return 'ready in $days working days';
   }
 }
 
-/// The unconfirmed-price ribbon. Quiet, but it does not go away.
-class _SampleRibbon extends StatelessWidget {
-  const _SampleRibbon();
+/// The unconfirmed-price strip. A printed warning notice, not a red banner —
+/// this theme does not shout, it states.
+class _UnconfirmedStrip extends StatelessWidget {
+  const _UnconfirmedStrip();
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: NorchaPalette.danger.withOpacity(0.14),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      color: PaperPalette.kraftDeep,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline,
-              size: 14, color: NorchaPalette.warn),
+          const Icon(Icons.info_outline, size: 14, color: PaperPalette.warn),
           const SizedBox(width: 8),
           Text(
-            'SAMPLE — PRICES NOT YET CONFIRMED',
-            style: NorchaType.sectionLabel.copyWith(
-              fontSize: 9.5,
-              letterSpacing: 1.8,
-              color: NorchaPalette.warn,
+            'SAMPLE EDITION — PRICES AWAITING THE SHOP',
+            style: PaperType.sectionLabel.copyWith(
+              fontSize: 9,
+              letterSpacing: 1.6,
+              color: PaperPalette.warn,
             ),
           ),
         ],
@@ -323,12 +319,12 @@ class _SampleRibbon extends StatelessWidget {
   }
 }
 
-/// Quantity — a very large number that rolls, with unobtrusive controls and
-/// the tier shortcuts below it.
-class _QuantityRow extends StatelessWidget {
+/// Quantity — set as a figure on a printed form, with the bulk breaks listed
+/// underneath the way a price list would print them.
+class _QuantityBlock extends StatelessWidget {
   final int qty;
   final ValueChanged<int> onSet;
-  const _QuantityRow({required this.qty, required this.onSet});
+  const _QuantityBlock({required this.qty, required this.onSet});
 
   static const _quick = [1, 10, 50, 100, 500];
 
@@ -336,32 +332,24 @@ class _QuantityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        GoldSheet(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        PaperSheet(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             children: [
-              _SquareBtn(
-                icon: Icons.remove_rounded,
-                onTap: () => onSet(qty - 1),
-                enabled: qty > 1,
-              ),
+              _PaperStepBtn(icon: Icons.remove, onTap: () => onSet(qty - 1), enabled: qty > 1),
               Expanded(
                 child: Center(
-                  child: KineticNumber(
-                    value: '$qty',
-                    style: NorchaType.displayXL.copyWith(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w700,
-                      color: NorchaPalette.goldBright,
+                  child: AnimatedSwitcher(
+                    duration: PaperMotion.fast,
+                    child: Text(
+                      '$qty',
+                      key: ValueKey(qty),
+                      style: PaperType.priceLarge.copyWith(fontSize: 46),
                     ),
                   ),
                 ),
               ),
-              _SquareBtn(
-                icon: Icons.add_rounded,
-                onTap: () => onSet(qty + 1),
-                enabled: qty < 10000,
-              ),
+              _PaperStepBtn(icon: Icons.add, onTap: () => onSet(qty + 1), enabled: qty < 10000),
             ],
           ),
         ),
@@ -374,25 +362,20 @@ class _QuantityRow extends StatelessWidget {
             return GestureDetector(
               onTap: () => onSet(n),
               child: AnimatedContainer(
-                duration: NorchaMotion.fast,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                duration: PaperMotion.fast,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: on ? NorchaPalette.gold : Colors.transparent,
-                  borderRadius: NorchaShape.chip,
+                  color: on ? PaperPalette.rust : PaperPalette.sheet,
+                  borderRadius: PaperShape.chip,
                   border: Border.all(
-                    color: on
-                        ? NorchaPalette.gold
-                        : NorchaPalette.gold.withOpacity(0.22),
+                    color: on ? PaperPalette.rust : PaperPalette.rule,
                   ),
                 ),
                 child: Text(
                   '$n',
-                  style: NorchaType.price.copyWith(
-                    fontSize: 13,
-                    color: on
-                        ? NorchaPalette.void_
-                        : NorchaPalette.textSecondary,
+                  style: PaperType.price.copyWith(
+                    fontSize: 13.5,
+                    color: on ? PaperPalette.sheet : PaperPalette.ink,
                   ),
                 ),
               ),
@@ -404,116 +387,126 @@ class _QuantityRow extends StatelessWidget {
   }
 }
 
-class _SquareBtn extends StatelessWidget {
+class _PaperStepBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool enabled;
-  const _SquareBtn({
-    required this.icon,
-    required this.onTap,
-    required this.enabled,
-  });
+  const _PaperStepBtn({required this.icon, required this.onTap, required this.enabled});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: enabled ? onTap : null,
       child: AnimatedOpacity(
-        duration: NorchaMotion.fast,
-        opacity: enabled ? 1 : 0.3,
+        duration: PaperMotion.fast,
+        opacity: enabled ? 1 : 0.32,
         child: Container(
-          width: 50,
-          height: 50,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: NorchaPalette.raisedHigh,
-            borderRadius: BorderRadius.circular(NorchaShape.sm),
-            border: Border.all(color: NorchaPalette.gold.withOpacity(0.16)),
+            color: PaperPalette.kraft,
+            borderRadius: PaperShape.card,
+            border: Border.all(color: PaperPalette.ruleStrong),
           ),
-          child: Icon(icon, color: NorchaPalette.goldBright, size: 22),
+          child: Icon(icon, color: PaperPalette.ink, size: 21),
         ),
       ),
     );
   }
 }
 
-/// The sum. The payoff. Display serif, rolling, with the discount line only
-/// when there is one — an empty "0% discount" row is noise.
-class _TheSum extends StatelessWidget {
+/// A job sheet. This is the visual anchor of the theme: a docket the shop would
+/// tear off and keep, with the line items set on rules and the total underlined
+/// like a handwritten sum.
+class _JobSheet extends StatelessWidget {
   final Quote quote;
   final String sizeLabel;
-  const _TheSum({required this.quote, required this.sizeLabel});
+  final String familyLabel;
+  const _JobSheet({
+    required this.quote,
+    required this.sizeLabel,
+    required this.familyLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GoldSheet(
+    return PaperSheet(
       elevated: true,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-      radius: NorchaShape.lg,
+      radius: PaperShape.lg,
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Text('THE SUM', style: NorchaType.sectionLabel),
-              SizedBox(width: 10),
-              Expanded(child: Hairline()),
-            ],
-          ),
-          const SizedBox(height: 18),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '$sizeLabel  ×  ${quote.qty}',
-                style: NorchaType.bodySmall,
-              ),
-              Text(NorchaData.money(quote.gross),
-                  style: NorchaType.mono.copyWith(
-                    decoration: quote.pct > 0 ? TextDecoration.lineThrough : null,
-                    color: quote.pct > 0
-                        ? NorchaPalette.textTertiary
-                        : NorchaPalette.textSecondary,
-                  )),
+              Text('JOB SHEET'.toUpperCase(), style: PaperType.sectionLabel),
+              const Spacer(),
+              Text('No. ${quote.qty.toString().padLeft(4, '0')}',
+                  style: PaperType.mono.copyWith(fontSize: 11)),
             ],
           ),
+          const SizedBox(height: 10),
+          const RuleLine(strong: true),
+          const SizedBox(height: 14),
+          _row(familyLabel, sizeLabel),
+          const SizedBox(height: 8),
+          _row('Unit price', NorchaData.money(quote.unit)),
+          const SizedBox(height: 8),
+          _row('Quantity', '× ${quote.qty}'),
+          const SizedBox(height: 8),
+          _row('Subtotal', NorchaData.money(quote.gross),
+              strikethrough: quote.pct > 0),
           if (quote.pct > 0) ...[
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Bulk — ${quote.pct}% off',
-                    style: NorchaType.bodySmall
-                        .copyWith(color: NorchaPalette.success)),
+                Text('Bulk rate — ${quote.pct}% off',
+                    style: PaperType.bodySmall.copyWith(
+                      color: PaperPalette.sage,
+                      fontWeight: FontWeight.w600,
+                    )),
                 Text('− ${NorchaData.money(quote.discount)}',
-                    style: NorchaType.mono
-                        .copyWith(color: NorchaPalette.success)),
+                    style: PaperType.mono.copyWith(color: PaperPalette.sage)),
               ],
             ),
           ],
-          const SizedBox(height: 16),
-          const Hairline(opacity: 0.28),
           const SizedBox(height: 14),
+          const RuleLine(strong: true),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: KineticNumber(
-                  value: NorchaData.money(quote.total),
-                  style: NorchaType.displayXL.copyWith(
-                    fontSize: 40,
-                    color: NorchaPalette.goldBright,
-                  ),
+              Text('TOTAL', style: PaperType.sectionLabel.copyWith(fontSize: 11)),
+              AnimatedSwitcher(
+                duration: PaperMotion.medium,
+                child: Text(
+                  NorchaData.money(quote.total),
+                  key: ValueKey(quote.total),
+                  style: PaperType.priceLarge.copyWith(fontSize: 38),
                 ),
               ),
-              Text('ETB',
-                  style: NorchaType.sectionLabel.copyWith(
-                    fontSize: 11,
-                    color: NorchaPalette.textTertiary,
-                  )),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _row(String label, String value, {bool strikethrough = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: PaperType.bodySmall),
+        Text(
+          value,
+          style: PaperType.price.copyWith(
+            decoration: strikethrough ? TextDecoration.lineThrough : null,
+            color: strikethrough ? PaperPalette.inkFaint : PaperPalette.ink,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,9 +1,9 @@
-// Size selection — proportional rectangles, not a radio list.
+// Size selection — a set of paper swatches.
 //
-// The first design used a radio-button list of six "10 × 15 cm" strings. That
-// makes the customer do the geometry in their head. Showing the shape at the
-// real aspect ratio means the choice is visual: people pick the size they can
-// picture, which is the size they actually want.
+// In the dark theme this grid showed each size as an outlined rectangle glowing
+// against black. Here the tile *is* the paper: cream stock, a cut edge, a hard
+// shadow. The customer is looking at a sample book, which is exactly the
+// decision they are making.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,8 +11,6 @@ import 'package:flutter/services.dart';
 import '../../core/pricing.dart';
 import '../../theme/norcha_theme.dart';
 
-/// Aspect ratios (w/h) for the known size keys. Anything unlisted falls back
-/// to a neutral 4:5 so the grid never has a hole in it.
 const Map<String, double> _kAspect = {
   'std-10x15': 10 / 15,
   'std-13x18': 13 / 18,
@@ -53,11 +51,11 @@ class SizeGrid extends StatelessWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.16,
+        childAspectRatio: 1.1,
       ),
       itemBuilder: (context, i) {
         final s = product.sizes[i];
-        return _SizeTile(
+        return _Swatch(
           size: s,
           aspect: _kAspect[s.key] ?? 0.8,
           selected: s.key == selected,
@@ -68,12 +66,12 @@ class SizeGrid extends StatelessWidget {
   }
 }
 
-class _SizeTile extends StatelessWidget {
+class _Swatch extends StatelessWidget {
   final PrintSize size;
   final double aspect;
   final bool selected;
   final VoidCallback onTap;
-  const _SizeTile({
+  const _Swatch({
     required this.size,
     required this.aspect,
     required this.selected,
@@ -88,29 +86,29 @@ class _SizeTile extends StatelessWidget {
         onTap();
       },
       child: AnimatedContainer(
-        duration: NorchaMotion.medium,
+        duration: PaperMotion.medium,
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: selected ? NorchaPalette.raisedHigh : NorchaPalette.ink,
-          borderRadius: BorderRadius.circular(NorchaShape.md),
+          color: selected ? PaperPalette.kraft : PaperPalette.sheet,
+          borderRadius: BorderRadius.circular(PaperShape.md),
           border: Border.all(
-            color: selected
-                ? NorchaPalette.gold
-                : NorchaPalette.gold.withOpacity(0.12),
-            width: selected ? 1.5 : 1,
+            color: selected ? PaperPalette.rust : PaperPalette.rule,
+            width: selected ? 1.8 : 1,
           ),
+          boxShadow: selected ? PaperElevation.lifted : PaperElevation.sheet,
         ),
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // The printed shape, at true proportion.
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  // The paper sample itself — cream stock on kraft, with a cut
+                  // edge and a shadow, so it reads as a physical offcut.
                   LayoutBuilder(
                     builder: (context, c) {
-                      const maxH = 54.0;
-                      final maxW = c.maxWidth * 0.42;
+                      const maxH = 62.0;
+                      final maxW = c.maxWidth * 0.6;
                       var w = maxH * aspect;
                       var h = maxH;
                       if (w > maxW) {
@@ -118,75 +116,57 @@ class _SizeTile extends StatelessWidget {
                         h = maxW / aspect;
                       }
                       return AnimatedContainer(
-                        duration: NorchaMotion.medium,
+                        duration: PaperMotion.medium,
                         curve: Curves.easeOutCubic,
                         width: w,
                         height: h,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(3),
+                          color: PaperPalette.sheet,
                           border: Border.all(
                             color: selected
-                                ? NorchaPalette.goldBright
-                                : NorchaPalette.textTertiary,
-                            width: 1.2,
+                                ? PaperPalette.rustDeep
+                                : PaperPalette.ruleStrong,
+                            width: 1,
                           ),
-                          boxShadow: selected
-                              ? [
-                                  BoxShadow(
-                                    color: NorchaPalette.gold.withOpacity(0.28),
-                                    blurRadius: 14,
-                                  ),
-                                ]
-                              : null,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x22000000),
+                              blurRadius: 1,
+                              offset: Offset(0, 1),
+                            ),
+                            BoxShadow(
+                              color: Color(0x10000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      size.label,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: NorchaType.bodySmall.copyWith(
-                        fontSize: 12,
-                        color: selected
-                            ? NorchaPalette.textPrimary
-                            : NorchaPalette.textSecondary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    NorchaData.money(size.price),
-                    style: NorchaType.price.copyWith(
-                      fontSize: 14,
-                      color: selected
-                          ? NorchaPalette.goldBright
-                          : NorchaPalette.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (selected)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: NorchaPalette.gold,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.check_rounded,
-                      size: 12, color: NorchaPalette.void_),
                 ),
               ),
-          ],
+              const SizedBox(height: 8),
+              Text(
+                size.label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: PaperType.bodySmall.copyWith(
+                  fontSize: 11.5,
+                  color: PaperPalette.ink,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                NorchaData.money(size.price),
+                style: PaperType.price.copyWith(
+                  fontSize: 14,
+                  color: selected ? PaperPalette.rust : PaperPalette.ink,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
