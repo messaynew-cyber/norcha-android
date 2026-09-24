@@ -30,6 +30,7 @@ jobs:
           channel: 'stable'
           cache: true
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
       - name: Parity tests
         run: flutter test --reporter expanded

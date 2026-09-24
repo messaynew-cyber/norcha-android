@@ -184,9 +184,9 @@ class _FamilyPicker extends StatelessWidget {
           onSelected: (_) => onSelect(p.family),
           showCheckmark: false,
           backgroundColor: Colors.white,
-          selectedColor: NorchaColors.gold.withValues(alpha: 0.16),
+          selectedColor: NorchaColors.gold.withOpacity(0.16),
           side: BorderSide(
-            color: on ? NorchaColors.gold : NorchaColors.gold.withValues(alpha: 0.3),
+            color: on ? NorchaColors.gold : NorchaColors.gold.withOpacity(0.3),
           ),
           labelStyle: TextStyle(
             color: on ? NorchaColors.ink : NorchaColors.inkSoft,
@@ -222,13 +222,13 @@ class _SizePicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
               decoration: BoxDecoration(
                 color: on
-                    ? NorchaColors.gold.withValues(alpha: 0.10)
+                    ? NorchaColors.gold.withOpacity(0.10)
                     : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: on
                       ? NorchaColors.gold
-                      : NorchaColors.gold.withValues(alpha: 0.28),
+                      : NorchaColors.gold.withOpacity(0.28),
                   width: on ? 1.6 : 1,
                 ),
               ),
@@ -296,7 +296,7 @@ class _QuantityStepper extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: NorchaColors.gold.withValues(alpha: 0.35)),
+                    color: NorchaColors.gold.withOpacity(0.35)),
               ),
               child: Text(
                 '$qty',
@@ -324,7 +324,7 @@ class _QuantityStepper extends StatelessWidget {
                   color: on ? NorchaColors.gold : Colors.white,
                   borderRadius: BorderRadius.circular(9),
                   border: Border.all(
-                      color: NorchaColors.gold.withValues(alpha: 0.35)),
+                      color: NorchaColors.gold.withOpacity(0.35)),
                 ),
                 child: Text(
                   '$n',
@@ -360,7 +360,7 @@ class _StepButton extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border:
-              Border.all(color: NorchaColors.gold.withValues(alpha: 0.35)),
+              Border.all(color: NorchaColors.gold.withOpacity(0.35)),
         ),
         child: Icon(icon, color: NorchaColors.gold),
       ),

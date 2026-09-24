@@ -85,7 +85,7 @@ class NorchaCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: NorchaColors.gold.withValues(alpha: 0.28)),
+        border: Border.all(color: NorchaColors.gold.withOpacity(0.28)),
       ),
       child: child,
     );

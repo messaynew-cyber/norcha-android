@@ -78,3 +78,21 @@ Sideload-only for v1. One release keystore, used from build #1 so that build #2
 installs cleanly *over* build #1. A per-build debug key would force an
 uninstall/reinstall on every update and wipe app data. The keystore is backed
 up off-device; losing it means the app can never be updated again.
+
+---
+
+## Two traps that already cost a CI run (2026-09-24)
+
+**1. `Size` is a name Flutter already owns.**
+`lib/core/pricing.dart` exports `PrintSize`, *not* `Size`. Flutter's material
+library exports its own `Size`; importing both makes `Size.fromHeight(52)`
+resolve to the wrong class. Nine analyse errors, one cause. Keep the `Print`
+prefix.
+
+**2. `Color.withValues()` needs Flutter 3.27+; CI pins 3.24.5.**
+Use `withOpacity()` in this repo until the pinned version is raised. Using a
+newer API than the pinned toolchain is not a subtle bug, it is just carelessness
+with a compile error attached.
+
+Both were caught by `flutter analyze` running **before** the build. That is why
+analysis is a gate and not an afterthought.

@@ -35,11 +35,11 @@ class Bi {
   String call(String lang) => lang == 'am' ? am : en;
 }
 
-class Size {
+class PrintSize {
   final String key;
   final String label;
   final int price;
-  const Size(this.key, this.label, this.price);
+  const PrintSize(this.key, this.label, this.price);
 }
 
 class Product {
@@ -47,7 +47,7 @@ class Product {
   final Bi label;
   final int lead; // production days
   final String tier; // which discount ladder applies
-  final List<Size> sizes;
+  final List<PrintSize> sizes;
   const Product(this.family, this.label, this.lead, this.tier, this.sizes);
 }
 
@@ -80,33 +80,33 @@ class Quote {
 class NorchaData {
   static const Map<String, Product> products = {
     'prints': Product('prints', Bi('Standard prints', 'መደበኛ ህትመት'), 0, 'photos', [
-      Size('std-10x15', '10 × 15 cm', 25),
-      Size('std-13x18', '13 × 18 cm', 40),
-      Size('std-15x21', '15 × 21 cm', 60),
-      Size('std-20x30', '20 × 30 cm', 120),
-      Size('std-a4', 'A4 · 21 × 30 cm', 150),
-      Size('std-a3', 'A3 · 30 × 42 cm', 280),
+      PrintSize('std-10x15', '10 × 15 cm', 25),
+      PrintSize('std-13x18', '13 × 18 cm', 40),
+      PrintSize('std-15x21', '15 × 21 cm', 60),
+      PrintSize('std-20x30', '20 × 30 cm', 120),
+      PrintSize('std-a4', 'A4 · 21 × 30 cm', 150),
+      PrintSize('std-a3', 'A3 · 30 × 42 cm', 280),
     ]),
     'canvas': Product('canvas', Bi('Canvas prints', 'የካንቫስ ህትመት'), 1, 'wall', [
-      Size('canvas-30x40', '30 × 40 cm', 950),
-      Size('canvas-40x60', '40 × 60 cm', 1600),
-      Size('canvas-60x80', '60 × 80 cm', 2700),
-      Size('canvas-80x120', '80 × 120 cm', 4600),
+      PrintSize('canvas-30x40', '30 × 40 cm', 950),
+      PrintSize('canvas-40x60', '40 × 60 cm', 1600),
+      PrintSize('canvas-60x80', '60 × 80 cm', 2700),
+      PrintSize('canvas-80x120', '80 × 120 cm', 4600),
     ]),
     'books': Product('books', Bi('Photo books', 'የፎቶ መጽሐፍ'), 2, 'books', [
-      Size('book-20x20-20', '20 × 20 cm · 20 pages', 1800),
-      Size('book-21x21-30', '21 × 21 cm · 30 pages', 2600),
-      Size('book-28x28-40', '28 × 28 cm · 40 pages', 3800),
-      Size('book-30x30-80', '30 × 30 cm · 80 pages', 6400),
+      PrintSize('book-20x20-20', '20 × 20 cm · 20 pages', 1800),
+      PrintSize('book-21x21-30', '21 × 21 cm · 30 pages', 2600),
+      PrintSize('book-28x28-40', '28 × 28 cm · 40 pages', 3800),
+      PrintSize('book-30x30-80', '30 × 30 cm · 80 pages', 6400),
     ]),
     'frames': Product('frames', Bi('Framed prints', 'የተከፈፈ ህትመት'), 1, 'wall', [
-      Size('frame-a4', 'A4 framed', 600),
-      Size('frame-a3', 'A3 framed', 900),
-      Size('frame-40x60', '40 × 60 cm framed', 1500),
+      PrintSize('frame-a4', 'A4 framed', 600),
+      PrintSize('frame-a3', 'A3 framed', 900),
+      PrintSize('frame-40x60', '40 × 60 cm framed', 1500),
     ]),
     'calendars': Product('calendars', Bi('Wall calendars', 'የግድግዳ የቀን መቁጠሪያ'), 1, 'wall', [
-      Size('cal-a4', 'A4 wall calendar', 450),
-      Size('cal-a3', 'A3 wall calendar', 700),
+      PrintSize('cal-a4', 'A4 wall calendar', 450),
+      PrintSize('cal-a3', 'A3 wall calendar', 700),
     ]),
     // 🔴 tier: 'mugs' is DELIBERATELY its own ladder — a flat one.
     // Mugs already carry pack pricing in `sizes` (1/2/4 at 350/650/1200).
@@ -114,9 +114,9 @@ class NorchaData {
     // as 650 via the 2-pack and 644 via 350×2 −8%. Two prices for one order.
     // Do not "fix" this by giving mugs the `gifts` ladder.
     'mugs': Product('mugs', Bi('Photo mugs', 'የፎቶ ሙግ'), 0, 'mugs', [
-      Size('mug-1', '1 mug', 350),
-      Size('mug-2', '2 mugs', 650),
-      Size('mug-4', '4 mugs', 1200),
+      PrintSize('mug-1', '1 mug', 350),
+      PrintSize('mug-2', '2 mugs', 650),
+      PrintSize('mug-4', '4 mugs', 1200),
     ]),
   };
 
