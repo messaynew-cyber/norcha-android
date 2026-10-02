@@ -69,7 +69,7 @@ class NorchaShellScope extends InheritedWidget {
   });
 
   @override
-  bool updateShouldNotify(NorchaShellScope old) => false;
+  bool updateShouldNotify(NorchaShellScope oldWidget) => false;
 }
 
 class _AppShellState extends State<AppShell> implements NorchaShellController {

@@ -30,7 +30,6 @@ import '../../widgets/kinetic_number.dart';
 import '../../widgets/page_scaffold.dart';
 import '../../widgets/size_selector.dart';
 import '../shell/app_shell.dart';
-import '../../theme/ghost_numerals.dart';
 
 class QuotePage extends StatefulWidget {
   final ThemeController themes;
@@ -308,51 +307,6 @@ class _Chip extends StatelessWidget {
             color: selected ? colour : c.inkSoft,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SizeTile extends StatelessWidget {
-  final PrintSize size;
-  final Accent accent;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _SizeTile({
-    required this.size,
-    required this.accent,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = NorchaColors.of(context);
-    return Pressable(
-      onTap: onTap,
-      child: ClothSurface(
-        accent: selected ? accent.colour : null,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              size.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: NorchaType.bodySmall(c).copyWith(
-                fontSize: 12.5,
-                color: c.ink,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(NorchaData.money(size.price),
-                style: NorchaType.title(c).copyWith(fontSize: 17)),
-          ],
         ),
       ),
     );

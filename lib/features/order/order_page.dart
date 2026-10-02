@@ -24,7 +24,6 @@ import '../../widgets/cloth_surface.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 import '../../theme/ghost_numerals.dart';
-import '../../widgets/ethiopian.dart';
 
 class OrderPage extends StatefulWidget {
   final ThemeController themes;

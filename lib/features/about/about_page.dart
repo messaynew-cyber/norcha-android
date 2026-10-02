@@ -20,7 +20,6 @@ import '../../theme/app_theme.dart';
 import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
-import '../../widgets/ethiopian.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
