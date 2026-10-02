@@ -65,9 +65,15 @@ class LangController extends ChangeNotifier {
       set(_lang == NorchaLang.am ? NorchaLang.en : NorchaLang.am);
 
   /// Reach the controller from anywhere in the tree.
-  static LangController of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<LangScope>()?.controller ??
-      (throw StateError('No LangScope above this widget'));
+  static LangController of(BuildContext context) {
+    // InheritedNotifier stores its Listenable in `notifier`; there is no
+    // `controller` field. Reading the wrong one is a null at runtime and an
+    // undefined-getter at analysis time.
+    final scope = context.dependOnInheritedWidgetOfExactType<LangScope>();
+    final n = scope?.notifier;
+    if (n is LangController) return n;
+    throw StateError('No LangScope above this widget');
+  }
 }
 
 class LangScope extends InheritedNotifier<LangController> {

@@ -600,6 +600,7 @@ class _TotalBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
 
     return Container(
       decoration: BoxDecoration(

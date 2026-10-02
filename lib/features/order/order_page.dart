@@ -225,6 +225,7 @@ class _ResultBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
 
     if (!result.ok) {
       return ClothSurface(
