@@ -21,6 +21,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data' show BytesBuilder;
 import 'dart:math';
 
 import 'norcha_api.dart';
@@ -126,7 +127,7 @@ class PhotoUpload {
     if (total > maxTotalMb * 1048576) {
       final mb = (total / 1048576).toStringAsFixed(0);
       return UploadFailure('too-heavy', Bi(
-        'That is $mb MB in one go — over the ${maxTotalMb} MB limit. Please send in two batches.',
+        'That is $mb MB in one go — over the $maxTotalMb MB limit. Please send in two batches.',
         'ይህ በአንድ ጊዜ $mb MB ነው። በሁለት ይላኩ።',
       ));
     }

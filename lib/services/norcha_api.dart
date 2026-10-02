@@ -149,7 +149,7 @@ class NorchaApi {
 
     if (c.isEmpty || p.isEmpty) {
       return const LookupResult(LookupStatus.invalidInput,
-          message: const Bi(
+          message: Bi(
             'Please fill in both the reference and the phone number.',
             'እባክዎ ሁለቱንም ይሙሉ።',
           ));
@@ -183,10 +183,9 @@ class NorchaApi {
 
       switch (res.statusCode) {
         case 200:
-          return const LookupResult(LookupStatus.found,
-              record: _recordFrom(json));
+          return LookupResult(LookupStatus.found, record: _recordFrom(json));
         case 400:
-          return const LookupResult(LookupStatus.invalidInput,
+          return LookupResult(LookupStatus.invalidInput,
               message: Bi(
                 (json['message'] as String?) ??
                     'Please fill in both the reference and the phone number.',
