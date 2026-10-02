@@ -40,11 +40,15 @@ for p in dart_files:
             problems.append(f"{p}: stale token '{t}'")
 
 # ---- symbol index -------------------------------------------------------------
+# symbol -> SET of files defining it. A name can be legitimately defined more
+# than once (Bi exists in both core/pricing.dart and services/norcha_api.dart);
+# last-write-wins would demand an import of the wrong one and report a
+# non-existent problem. Any defining file satisfies the requirement.
 symbols = {}
 for p in dart_files:
     s = open(p).read()
     for m in re.finditer(r'^(?:class|enum|mixin|abstract class)\s+(\w+)', s, flags=re.M):
-        symbols[m.group(1)] = os.path.normpath(p)
+        symbols.setdefault(m.group(1), set()).add(os.path.normpath(p))
 
 def strip_comments(src):
     out = []
@@ -88,11 +92,13 @@ for p in dart_files:
             resolved.add(os.path.normpath(os.path.join(os.path.dirname(p), imp)))
 
     declared = {m.group(1) for m in re.finditer(r'^(?:class|enum|mixin|abstract class)\s+(\w+)', raw, flags=re.M)}
-    for sym, defp in symbols.items():
-        if sym in declared or defp == os.path.normpath(p): continue
+    for sym, defps in symbols.items():
+        if sym in declared or os.path.normpath(p) in defps: continue
         if re.search(r'\b' + re.escape(sym) + r'\b', body):
-            if not any(os.path.normpath(r) == defp for r in resolved):
-                problems.append(f"{os.path.relpath(p, ROOT)}: uses {sym}, no import of {os.path.relpath(defp, ROOT)}")
+            # satisfied if ANY defining file is imported
+            if not any(os.path.normpath(r) in defps for r in resolved):
+                where = " or ".join(sorted(os.path.relpath(d, ROOT) for d in defps))
+                problems.append(f"{os.path.relpath(p, ROOT)}: uses {sym}, no import of {where}")
 
     # 4. `c.` in a scope that cannot resolve it
     stripped = strip_comments(raw)
