@@ -167,6 +167,14 @@ class _UploadPageState extends State<UploadPage> {
     );
   }
 
+  /// The send button's label. Built here for the same reason as the lead label
+  /// on Home: a nested ternary inside a string interpolation does not parse.
+  String get _sendLabel {
+    if (_sending) return 'Sending…';
+    if (_photos.isEmpty) return 'Send photos';
+    return 'Send ${_photos.length} photo${_photos.length == 1 ? '' : 's'}';
+  }
+
   Widget _form() {
     final product = NorchaData.products[_family]!;
 
@@ -340,10 +348,7 @@ class _UploadPageState extends State<UploadPage> {
         ],
 
         _PrimaryButton(
-          label: _sending
-              ? 'Sending…'
-              : 'Send ${_photos.isEmpty ? 'photos' : '${_photos.length} photo'
-                  '${_photos.length == 1 ? '' : 's'}'}',
+          label: _sendLabel,
           busy: _sending,
           onTap: (_sending || _photos.isEmpty) ? null : _send,
         ),

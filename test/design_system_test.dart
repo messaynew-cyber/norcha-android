@@ -74,7 +74,7 @@ void main() {
     });
   });
 
-  group('the palette is the shop's own — netela cream, pine, Meskel gold', () {
+  group('the palette is the shop palette — netela cream, pine, Meskel gold', () {
     test('the page ground is warm cream, not white', () {
       // #F8F4EE is hand-spun cotton. Pure #FFF reads as a blank document; the
       // warmth is the entire Ethiopian character of the design.

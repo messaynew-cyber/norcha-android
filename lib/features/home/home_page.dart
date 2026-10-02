@@ -18,6 +18,7 @@ import '../../core/pricing.dart';
 import '../../theme/netela.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/motion_budget.dart';
 import '../shell/app_shell.dart';
 
 class HomePage extends StatefulWidget {
@@ -187,6 +188,13 @@ class _FamilyRow extends StatelessWidget {
         .map((s) => s.price)
         .reduce((a, b) => a < b ? a : b);
 
+    // Built here rather than inline: a ternary nested inside a string
+    // interpolation is unparseable in Dart, and the analyser is right to
+    // refuse it. Readable beats clever.
+    final leadLabel = product.lead == 0
+        ? 'same day'
+        : '${product.lead} day${product.lead == 1 ? '' : 's'}';
+
     return ClothSurface(
       accent: accent.colour,
       padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
@@ -203,9 +211,7 @@ class _FamilyRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '${product.sizes.length} sizes · '
-                  '${product.lead == 0 ? 'same day' : '${product.lead} day'
-                      '${product.lead == 1 ? '' : 's'}'}',
+                  '${product.sizes.length} sizes · $leadLabel',
                   style: NorchaType.bodySmall,
                 ),
               ],

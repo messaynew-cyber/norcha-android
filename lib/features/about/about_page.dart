@@ -16,6 +16,7 @@ import '../../core/delivery.dart';
 import '../../core/holidays.dart';
 import '../../core/pricing.dart';
 import '../../theme/netela.dart';
+import '../shell/app_shell.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/cloth_surface.dart';
 
