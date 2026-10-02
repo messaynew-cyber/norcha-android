@@ -1,16 +1,16 @@
 // Norcha Print — Upload.
 //
 // 🔴 THE RULE THIS SCREEN OBEYS
-// It asks the server whether uploads are switched on BEFORE it offers them.
-// If GET /api/upload says 503, the entry point stays HIDDEN and the page
-// explains the WhatsApp alternative instead. Under no circumstance does it show
-// a working upload box that cannot deliver — a customer who believes their
-// photos are in and finds out they are not has lost something we cannot give
-// back. That rule is from the website and it is the right one.
+// It asks the server whether uploads are switched on BEFORE it offers them. If
+// GET /api/upload says 503, the entry point stays HIDDEN and the page offers the
+// WhatsApp door instead. Under no circumstance does it show a working upload box
+// that cannot deliver — a customer who believes their photos are in and finds
+// out they are not has lost something that cannot be given back. That rule is
+// from the website and it is the right one.
 //
-// And when an upload FAILS: the photos are still on the customer's phone. Say
-// that first, in those words. It is the only thing they are actually worried
-// about.
+// AND WHEN AN UPLOAD FAILS
+// The photos are still on the customer's phone. Say that first, in those words.
+// It is the only thing they are actually worried about.
 
 import 'dart:io';
 
@@ -69,6 +69,7 @@ class _UploadPageState extends State<UploadPage> {
     super.dispose();
   }
 
+  /// Ask before offering. A 503 hides the whole flow.
   Future<void> _probeServer() async {
     final p = await NorchaApi.probeUpload();
     if (!mounted) return;
@@ -82,8 +83,7 @@ class _UploadPageState extends State<UploadPage> {
     try {
       final picker = ImagePicker();
       final files = await picker.pickMultiImage();
-      if (files.isEmpty) return;
-      if (!mounted) return;
+      if (files.isEmpty || !mounted) return;
       setState(() {
         _photos
           ..clear()
@@ -124,6 +124,7 @@ class _UploadPageState extends State<UploadPage> {
         _sending = false;
         _success = res;
       });
+      HapticFeedback.mediumImpact();
     } on UploadFailure catch (e) {
       if (!mounted) return;
       setState(() {
@@ -133,10 +134,18 @@ class _UploadPageState extends State<UploadPage> {
     }
   }
 
+  /// The send button's label.
+  ///
+  /// Built here rather than inline: a nested ternary inside a string
+  /// interpolation does not parse in Dart, and the analyser is right to refuse.
+  String get _sendLabel {
+    if (_sending) return 'Sending…';
+    if (_photos.isEmpty) return 'Send photos';
+    return 'Send ${_photos.length} photo${_photos.length == 1 ? '' : 's'}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final c = NorchaColors.of(context);
-
     return PageScaffold(
       chapter: 4,
       eyebrow: 'Send photos',
@@ -149,25 +158,22 @@ class _UploadPageState extends State<UploadPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: _probing
               ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 48),
+                  padding: EdgeInsets.symmetric(vertical: 44),
                   child: Center(
-                    child: LoadingMark(size: 74, label: 'Checking\u2026'),
+                    child: LoadingMark(size: 76, label: 'Checking…'),
                   ),
                 )
               : _probe?.configured != true
                   ? const _UploadOffCard()
                   : _success != null
                       ? _SuccessCard(success: _success!)
-                      : _form(),
+                      : _form(context),
         ),
       ],
     );
   }
 
-  Widget _form() {
-    // This is a State method, not a widget, so it has no BuildContext of its
-    // own. It is only ever called from build(), and Flutter guarantees `context`
-    // is valid at that point — reading it here is the same read build() made.
+  Widget _form(BuildContext context) {
     final c = NorchaColors.of(context);
     final product = NorchaData.products[_family]!;
 
@@ -181,35 +187,37 @@ class _UploadPageState extends State<UploadPage> {
         ),
         const SizedBox(height: 20),
 
-        // Photo picker
-        ClothSurface(
-          onTap: _photos.isEmpty ? _pick : null,
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            children: [
-              Icon(
-                _photos.isEmpty
-                    ? Icons.add_photo_alternate_outlined
-                    : Icons.collections_rounded,
-                size: 30,
-                color: Brand.action(c),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                _photos.isEmpty
-                    ? 'Choose photos'
-                    : '${_photos.length} selected',
-                style: NorchaType.title(c).copyWith(fontSize: 17),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _photos.isEmpty
-                    ? 'Up to ${PhotoUpload.maxFiles} · max '
-                        '${PhotoUpload.maxPerFileMb} MB each'
-                    : 'Tap to choose again',
-                style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
-              ),
-            ],
+        // Picker.
+        AnimatedSize(
+          duration: Motion.fast,
+          curve: Curves.easeOut,
+          child: ClothSurface(
+            onTap: _photos.isEmpty ? _pick : null,
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                Icon(
+                  _photos.isEmpty
+                      ? Icons.add_photo_alternate_outlined
+                      : Icons.collections_rounded,
+                  size: 30,
+                  color: Brand.action(c),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _photos.isEmpty ? 'Choose photos' : '${_photos.length} selected',
+                  style: NorchaType.title(c).copyWith(fontSize: 17),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _photos.isEmpty
+                      ? 'Up to ${PhotoUpload.maxFiles} · max '
+                          '${PhotoUpload.maxPerFileMb} MB each'
+                      : 'Tap to choose again',
+                  style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
+                ),
+              ],
+            ),
           ),
         ),
 
@@ -232,7 +240,7 @@ class _UploadPageState extends State<UploadPage> {
                     width: 66,
                     height: 66,
                     color: c.groundDeep,
-                    child: const Icon(Icons.broken_image_outlined,
+                    child: Icon(Icons.broken_image_outlined,
                         size: 18, color: c.inkFaint),
                   ),
                 ),
@@ -241,8 +249,8 @@ class _UploadPageState extends State<UploadPage> {
           ),
         ],
 
-        const SizedBox(height: 20),
-        const Text('WHAT IS IT FOR?', style: NorchaType.sectionLabel(c)),
+        const SizedBox(height: 22),
+        Text('WHAT IS IT FOR?', style: NorchaType.sectionLabel(c)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -262,7 +270,7 @@ class _UploadPageState extends State<UploadPage> {
         ),
 
         const SizedBox(height: 18),
-        const Text('SIZE (OPTIONAL)', style: NorchaType.sectionLabel(c)),
+        Text('SIZE (OPTIONAL)', style: NorchaType.sectionLabel(c)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -273,8 +281,8 @@ class _UploadPageState extends State<UploadPage> {
                 label: s.label,
                 accent: Accent.forFamily(_family),
                 selected: _sizeKey == s.key,
-                onTap: () => setState(
-                    () => _sizeKey = _sizeKey == s.key ? null : s.key),
+                onTap: () =>
+                    setState(() => _sizeKey = _sizeKey == s.key ? null : s.key),
               ),
           ],
         ),
@@ -299,23 +307,25 @@ class _UploadPageState extends State<UploadPage> {
         const SizedBox(height: 22),
 
         if (_failure != null) ...[
-          ClothSurface(
-            accent: Brand.warn,
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.info_outline,
-                    size: 19, color: Brand.warn),
-                const SizedBox(width: 11),
-                Expanded(
-                  child: Text(
-                    _failure!.message.call('en'),
-                    style: NorchaType.bodySmall(c).copyWith(
-                        fontSize: 13.5, color: c.ink),
+          AnimatedSize(
+            duration: Motion.fast,
+            child: ClothSurface(
+              accent: Brand.warn,
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.info_outline, size: 19, color: Brand.warn),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      _failure!.message.call('en'),
+                      style: NorchaType.bodySmall(c)
+                          .copyWith(fontSize: 13.5, color: c.ink),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -328,15 +338,12 @@ class _UploadPageState extends State<UploadPage> {
               value: _progress,
               minHeight: 4,
               backgroundColor: c.groundDeep,
-              valueColor:
-                  const AlwaysStoppedAnimation(Brand.action(c)),
+              valueColor: AlwaysStoppedAnimation(Brand.action(c)),
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            '${(_progress * 100).round()}% sent',
-            style: NorchaType.bodySmall(c).copyWith(fontSize: 12),
-          ),
+          Text('${(_progress * 100).round()}% sent',
+              style: NorchaType.bodySmall(c).copyWith(fontSize: 12)),
           const SizedBox(height: 14),
         ],
 
@@ -347,8 +354,8 @@ class _UploadPageState extends State<UploadPage> {
         ),
         const SizedBox(height: 12),
         Text(
-          'The chat still works and it always will — WhatsApp is right there '
-          'if you would rather send them that way.',
+          'The chat still works and it always will — WhatsApp is right there if '
+          'you would rather send them that way.',
           style: NorchaType.bodySmall(c).copyWith(fontSize: 12),
         ),
       ],
@@ -373,18 +380,15 @@ class _UploadOffCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.cloud_off_outlined,
+                  const Icon(Icons.cloud_off_outlined,
                       size: 20, color: Brand.warn),
-                  SizedBox(width: 11),
-                  Text('Upload is not switched on yet',
-                      style: TextStyle(
-                        fontFamily: NorchaType.body(c)Family,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: c.ink,
-                      )),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text('Upload is not switched on yet',
+                        style: NorchaType.title(c).copyWith(fontSize: 16)),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -399,10 +403,8 @@ class _UploadOffCard extends StatelessWidget {
         const SizedBox(height: 16),
         _PrimaryButton(
           label: 'Send on WhatsApp',
-          onTap: () => launchUrl(
-            Uri.parse('https://wa.me/${Shop.wa}'),
-            mode: LaunchMode.externalApplication,
-          ),
+          onTap: () => launchUrl(Uri.parse('https://wa.me/${Shop.wa}'),
+              mode: LaunchMode.externalApplication),
         ),
       ],
     );
@@ -417,6 +419,10 @@ class _SuccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+    final text = Uri.encodeComponent(
+        'Hello Norcha Print! Reference: ${success.code}');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -429,13 +435,12 @@ class _SuccessCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: Brand.action(c).withOpacity(0.10),
+                      color: Brand.action(c).withOpacity(0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_rounded,
+                    child: Icon(Icons.check_rounded,
                         size: 19, color: Brand.action(c)),
                   ),
                   const SizedBox(width: 12),
@@ -446,14 +451,12 @@ class _SuccessCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              const Text('YOUR REFERENCE', style: NorchaType.sectionLabel(c)),
+              Text('YOUR REFERENCE', style: NorchaType.sectionLabel(c)),
               const SizedBox(height: 8),
               SelectableText(
                 success.code,
                 style: NorchaType.title(c).copyWith(
-                  fontSize: 28,
-                  letterSpacing: 2,
-                  color: Brand.action(c),
+                  fontSize: 28, letterSpacing: 2, color: Brand.action(c),
                 ),
               ),
               const SizedBox(height: 14),
@@ -469,8 +472,7 @@ class _SuccessCard extends StatelessWidget {
         _PrimaryButton(
           label: 'Send the reference on WhatsApp',
           onTap: () => launchUrl(
-            Uri.parse('https://wa.me/${Shop.wa}?text='
-                '${Uri.encodeComponent("Hello Norcha Print! Reference: ${success.code}")}'),
+            Uri.parse('https://wa.me/${Shop.wa}?text=$text'),
             mode: LaunchMode.externalApplication,
           ),
         ),
@@ -495,28 +497,26 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
-    return Material(
-      color: selected ? accent.colour.withOpacity(0.10) : c.card,
-      borderRadius: BorderRadius.circular(Corners.pill),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Corners.pill),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Corners.pill),
-            border: Border.all(
-              color: selected ? accent.colour : c.line,
-              width: selected ? 1.4 : 1,
-            ),
+    return Pressable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: Motion.fast,
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? accent.colour.withOpacity(0.10) : c.card,
+          borderRadius: BorderRadius.circular(Corners.pill),
+          border: Border.all(
+            color: selected ? accent.colour : c.line,
+            width: selected ? 1.4 : 1,
           ),
-          child: Text(
-            label,
-            style: NorchaType.bodySmall(c).copyWith(
-              fontSize: 13,
-              color: selected ? accent.colour : c.inkSoft,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            ),
+        ),
+        child: Text(
+          label,
+          style: NorchaType.bodySmall(c).copyWith(
+            fontSize: 13,
+            color: selected ? accent.colour : c.inkSoft,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),
@@ -562,11 +562,11 @@ class _TextInput extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(Corners.sm),
-              borderSide: const BorderSide(color: c.line),
+              borderSide: BorderSide(color: c.line),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(Corners.sm),
-              borderSide: const BorderSide(color: Brand.action(c), width: 1.5),
+              borderSide: BorderSide(color: Brand.action(c), width: 1.5),
             ),
           ),
         ),
@@ -585,31 +585,29 @@ class _PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
-    return Material(
-      color: onTap == null ? c.inkFaint : Brand.action(c),
-      borderRadius: BorderRadius.circular(Corners.sm),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Corners.sm),
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          child: busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: c.card),
-                )
-              : Text(
-                  label,
-                  style: NorchaType.body(c).copyWith(
-                    color: c.card,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: onTap == null ? c.inkFaint : Brand.action(c),
+          borderRadius: BorderRadius.circular(Corners.sm),
         ),
+        child: busy
+            ? SizedBox(
+                width: 18, height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Brand.onAction(c)),
+              )
+            : Text(
+                label,
+                style: NorchaType.body(c).copyWith(
+                  color: Brand.onAction(c),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
