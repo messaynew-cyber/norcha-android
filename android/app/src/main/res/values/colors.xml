@@ -2,4 +2,9 @@
 <resources>
     <!-- Norcha cream, matching norchaprint.com's theme-color #F8F4EE -->
     <color name="norcha_cream">#F8F4EE</color>
+
+    <!-- The adaptive-icon background. Same netela cream as the page ground, so
+         the launcher icon and the app's first frame are the same colour and the
+         transition into the app is seamless rather than a flash. -->
+    <color name="norcha_paper">#F8F4EE</color>
 </resources>

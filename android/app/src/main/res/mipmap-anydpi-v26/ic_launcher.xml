@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Norcha launcher icon: adaptive.
+     The glyph sits in the safe zone at 40% of the canvas, so Android can mask
+     it to whatever shape the launcher uses (circle, squircle, teardrop) without
+     ever clipping the character. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/norcha_paper" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
