@@ -42,6 +42,14 @@ jobs:
           channel: 'stable'
           cache: true
 
+      # Cheapest gate first: a plain-Python structural check that catches the
+      # class of mistake that has actually broken this build repeatedly —
+      # mangled regex substitutions, stale tokens, symbols used without an
+      # import, and `c` used in a scope that cannot resolve it. It runs in about
+      # a second, before the ~90s a Flutter toolchain takes to boot.
+      - name: Pre-flight audit
+        run: python3 tools/audit.py .
+
       - name: Resolve dependencies
         run: flutter pub get
 

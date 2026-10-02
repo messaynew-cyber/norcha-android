@@ -165,6 +165,10 @@ class _UploadPageState extends State<UploadPage> {
   }
 
   Widget _form() {
+    // This is a State method, not a widget, so it has no BuildContext of its
+    // own. It is only ever called from build(), and Flutter guarantees `context`
+    // is valid at that point — reading it here is the same read build() made.
+    final c = NorchaColors.of(context);
     final product = NorchaData.products[_family]!;
 
     return Column(
@@ -173,7 +177,7 @@ class _UploadPageState extends State<UploadPage> {
         Text(
           'Same originals, no compression. You get a reference number you can '
           'read down a phone line.',
-          style: NorchaType.body(c)Small(c).copyWith(fontSize: 14),
+          style: NorchaType.bodySmall(c).copyWith(fontSize: 14),
         ),
         const SizedBox(height: 20),
 
@@ -203,7 +207,7 @@ class _UploadPageState extends State<UploadPage> {
                     ? 'Up to ${PhotoUpload.maxFiles} · max '
                         '${PhotoUpload.maxPerFileMb} MB each'
                     : 'Tap to choose again',
-                style: NorchaType.body(c)Small(c).copyWith(fontSize: 12.5),
+                style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
               ),
             ],
           ),
@@ -307,7 +311,7 @@ class _UploadPageState extends State<UploadPage> {
                 Expanded(
                   child: Text(
                     _failure!.message.call('en'),
-                    style: NorchaType.body(c)Small(c).copyWith(
+                    style: NorchaType.bodySmall(c).copyWith(
                         fontSize: 13.5, color: c.ink),
                   ),
                 ),
@@ -331,7 +335,7 @@ class _UploadPageState extends State<UploadPage> {
           const SizedBox(height: 8),
           Text(
             '${(_progress * 100).round()}% sent',
-            style: NorchaType.body(c)Small(c).copyWith(fontSize: 12),
+            style: NorchaType.bodySmall(c).copyWith(fontSize: 12),
           ),
           const SizedBox(height: 14),
         ],
@@ -345,7 +349,7 @@ class _UploadPageState extends State<UploadPage> {
         Text(
           'The chat still works and it always will — WhatsApp is right there '
           'if you would rather send them that way.',
-          style: NorchaType.body(c)Small(c).copyWith(fontSize: 12),
+          style: NorchaType.bodySmall(c).copyWith(fontSize: 12),
         ),
       ],
     );
@@ -387,7 +391,7 @@ class _UploadOffCard extends StatelessWidget {
               Text(
                 'Please send your photos on WhatsApp — it works right now, and '
                 'you keep the chat.',
-                style: NorchaType.body(c)Small(c).copyWith(fontSize: 13.5),
+                style: NorchaType.bodySmall(c).copyWith(fontSize: 13.5),
               ),
             ],
           ),
@@ -456,7 +460,7 @@ class _SuccessCard extends StatelessWidget {
               Text(
                 'Keep this. A person at the studio still confirms sizes and '
                 'price before printing — message us and we will confirm.',
-                style: NorchaType.body(c)Small(c).copyWith(fontSize: 13),
+                style: NorchaType.bodySmall(c).copyWith(fontSize: 13),
               ),
             ],
           ),
@@ -508,7 +512,7 @@ class _Chip extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: NorchaType.body(c)Small(c).copyWith(
+            style: NorchaType.bodySmall(c).copyWith(
               fontSize: 13,
               color: selected ? accent.colour : c.inkSoft,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
