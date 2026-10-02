@@ -56,8 +56,8 @@ class GlassSurface extends StatelessWidget {
       content = InkWell(
         onTap: onTap,
         borderRadius: r,
-        splashColor: NorchaPalette.gold.withValues(alpha: 0.08),
-        highlightColor: NorchaPalette.gold.withValues(alpha: 0.04),
+        splashColor: NorchaPalette.gold.withOpacity(0.08),
+        highlightColor: NorchaPalette.gold.withOpacity(0.04),
         child: content,
       );
     }
@@ -66,7 +66,7 @@ class GlassSurface extends StatelessWidget {
     // the (already dark) ground, with no filter at all.
     Widget surface = DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: overlayAlpha),
+        color: Colors.white.withOpacity(overlayAlpha),
         borderRadius: r,
       ),
       child: content,
@@ -104,7 +104,7 @@ class GlassSurface extends StatelessWidget {
           borderRadius: r,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: shadowSpec[2]),
+              color: Colors.black.withOpacity(shadowSpec[2]),
               blurRadius: shadowSpec[0],
               offset: Offset(0, shadowSpec[1]),
             ),
@@ -180,9 +180,9 @@ class AtmosphericGround extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                NorchaPalette.void_.withValues(alpha: 0.72),
-                NorchaPalette.void_.withValues(alpha: 0.88),
-                NorchaPalette.void_.withValues(alpha: 0.96),
+                NorchaPalette.void_.withOpacity(0.72),
+                NorchaPalette.void_.withOpacity(0.88),
+                NorchaPalette.void_.withOpacity(0.96),
               ],
               stops: const [0.0, 0.55, 1.0],
             ),

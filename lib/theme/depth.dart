@@ -85,11 +85,13 @@ class Glass {
     final top = gold
         ? const Color(0x66C9A227) // gold rim — reserved for `float` and selection
         : const Color(0x24FFFFFF); // 14% white
+    // NOT const: the top edge depends on [gold] at runtime. The side edges and
+    // the bottom shadow line are fixed, so they stay const internally.
     return Border(
       top: BorderSide(color: top, width: 1),
-      left: BorderSide(color: const Color(0x0DFFFFFF), width: 1),
-      right: BorderSide(color: const Color(0x0DFFFFFF), width: 1),
-      bottom: BorderSide(color: const Color(0x14000000), width: 1),
+      left: const BorderSide(color: Color(0x0DFFFFFF), width: 1),
+      right: const BorderSide(color: Color(0x0DFFFFFF), width: 1),
+      bottom: const BorderSide(color: Color(0x14000000), width: 1),
     );
   }
 

@@ -148,7 +148,7 @@ class NorchaApi {
     final p = phone.trim();
 
     if (c.isEmpty || p.isEmpty) {
-      return LookupResult(LookupStatus.invalidInput,
+      return const LookupResult(LookupStatus.invalidInput,
           message: const Bi(
             'Please fill in both the reference and the phone number.',
             'እባክዎ ሁለቱንም ይሙሉ።',
@@ -174,7 +174,7 @@ class NorchaApi {
       try {
         json = jsonDecode(body) as Map<String, dynamic>;
       } catch (_) {
-        return LookupResult(LookupStatus.networkError,
+        return const LookupResult(LookupStatus.networkError,
             message: const Bi(
               'We could not reach the studio. Check your connection and try again.',
               'ከስቱዲዮ ጋር መገናኘት አልቻልንም። ኢንተርኔትዎን ያረጋግጡ።',
@@ -183,10 +183,10 @@ class NorchaApi {
 
       switch (res.statusCode) {
         case 200:
-          return LookupResult(LookupStatus.found,
+          return const LookupResult(LookupStatus.found,
               record: _recordFrom(json));
         case 400:
-          return LookupResult(LookupStatus.invalidInput,
+          return const LookupResult(LookupStatus.invalidInput,
               message: Bi(
                 (json['message'] as String?) ??
                     'Please fill in both the reference and the phone number.',
@@ -194,38 +194,38 @@ class NorchaApi {
               ));
         case 404:
           // 🔴 ONE message for every 404 — see the note at the top of this file.
-          return LookupResult(LookupStatus.notFound,
+          return const LookupResult(LookupStatus.notFound,
               message: const Bi(
                 'We could not find an order with that reference and phone number. Check both, or message us on WhatsApp.',
                 'በዚህ ቁጥር እና ስልክ ቁጥር ትዕዛዝ አልተገኘም። ሁለቱንም ያረጋግጡ ወይም በዋትስአፕ ያግኙን።',
               ));
         case 429:
-          return LookupResult(LookupStatus.rateLimited,
+          return const LookupResult(LookupStatus.rateLimited,
               message: const Bi(
                 'Too many checks from this connection. Please try again later, or message us on WhatsApp.',
                 'ከዚህ ግንኙነት ብዙ ጊዜ ተፈልጎዋል። ቆይተው ይሞክሩ ወይም በዋትስአፕ ያግኙን።',
               ));
         case 503:
-          return LookupResult(LookupStatus.notConfigured,
+          return const LookupResult(LookupStatus.notConfigured,
               message: const Bi(
                 'Order lookup is not switched on yet. Message us on WhatsApp and we will check for you.',
                 'የትዕዛዝ ፍለጋ ገና አልተከፈተም። በዋትስአፕ ያግኙን።',
               ));
         default:
-          return LookupResult(LookupStatus.networkError,
+          return const LookupResult(LookupStatus.networkError,
               message: const Bi(
                 'Something went wrong on our side. Please message us on WhatsApp.',
                 'በእኛ በኩል ችግር ተፈጥሯል። በዋትስአፕ ያግኙን።',
               ));
       }
     } on TimeoutException {
-      return LookupResult(LookupStatus.networkError,
+      return const LookupResult(LookupStatus.networkError,
           message: const Bi(
             'That took too long. Check your connection and try again.',
             'ጊዜው አልፎበታል። ኢንተርኔትዎን ያረጋግጡ።',
           ));
     } catch (_) {
-      return LookupResult(LookupStatus.networkError,
+      return const LookupResult(LookupStatus.networkError,
           message: const Bi(
             'We could not reach the studio. Check your connection and try again.',
             'ከስቱዲዮ ጋር መገናኘት አልቻልንም። ኢንተርኔትዎን ያረጋግጡ።',

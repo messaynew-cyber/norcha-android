@@ -9,6 +9,7 @@
 // that survives six months of edits and a design that quietly turns back into
 // a form.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:norcha_print/theme/depth.dart';
 import 'package:norcha_print/theme/norcha_theme.dart';
@@ -77,10 +78,10 @@ void main() {
     test('the primary gold is not a saturated yellow', () {
       // A luxury gold is desaturated antique, not #FFD700. Saturated yellow
       // reads as a discount sticker.
-      final g = NorchaPalette.gold;
-      final r = (g.r * 255).round();
-      final gg = (g.g * 255).round();
-      final b = (g.b * 255).round();
+      const g = NorchaPalette.gold;
+      final r = (g.red);
+      final gg = (g.green);
+      final b = (g.blue);
       expect(b, greaterThan(20), reason: 'too pure/acid a gold');
       expect(r - b, lessThan(200), reason: 'too saturated to read as foil');
       expect(gg, lessThan(r), reason: 'green channel should sit below red for antique gold');
@@ -88,10 +89,10 @@ void main() {
 
     test('the ground is warm black, not #000', () {
       // Pure black reads as a switched-off screen. A trace of warm reads as ink.
-      final v = NorchaPalette.void_;
-      final r = (v.r * 255).round();
-      final g = (v.g * 255).round();
-      final b = (v.b * 255).round();
+      const v = NorchaPalette.void_;
+      final r = (v.red);
+      final g = (v.green);
+      final b = (v.blue);
       expect(r + g + b, greaterThan(0), reason: 'that is pure black');
       expect(r, greaterThanOrEqualTo(b), reason: 'the black should lean warm, not blue');
     });

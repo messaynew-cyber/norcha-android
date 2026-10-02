@@ -92,7 +92,7 @@ class PhotoUpload {
     }
     if (r.photos.length > maxFiles) {
       return UploadFailure('too-many', Bi(
-        'That is ${r.photos.length} files. Please send at most $maxFiles at a time.',
+        'That is $r.photos.length files. Please send at most $maxFiles at a time.',
         'ይህ $maxFiles ፋይሎች ነው። ቢበዛ $maxFiles ይላኩ።',
       ));
     }
