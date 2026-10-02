@@ -19,6 +19,9 @@ dependencies:
   timezone: ^0.9.4
   flutter_timezone: ^1.0.8
   shared_preferences: ^2.3.2
+  # Photo picking for the live /api/upload flow. The website uses a file input;
+  # the app needs the real gallery, including HEIC straight off the camera roll.
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

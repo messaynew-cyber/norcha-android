@@ -1,66 +1,130 @@
 // Norcha Print — design system.
 //
-// DIRECTION: dark editorial luxury.
+// DIRECTION: light, editorial, Ethiopian. "Netela" — cream paper, pine, gold.
 //
-// WHY THIS REPLACED THE FIRST DESIGN
-// The first build was a correct form. Cream background, chips, radio rows, a
-// stepper. It worked and it looked like a tax return. Nobody shows a friend a
-// well-aligned form.
+// ─── WHY THIS IS LIGHT, AFTER THE DARK VERSION WAS ACCEPTED ───────────────
+// The dark editorial build ("Darkroom") was signed off on 2026-09-25 without
+// any recorded reasoning. The website's own DESIGN.md says why that was a
+// mistake: the shop's real identity is LIGHT — netela cream #F8F4EE, ink
+// #241F18, pine #0E5C41, Meskel gold #C1922B. Dark exists on the web only as a
+// [data-theme="dark"] toggle, a secondary mode, not the brand.
 //
-// What this is instead: a print studio at night. Near-black ground so the
-// images carry, antique gold used like foil — sparingly, always as a hairline
-// or a small mark, never as a big flat fill. Display serif for the numbers
-// because a number set large in a serif reads as *worth* something. Space used
-// as a luxury signal, not wasted.
+// So the app was wearing a costume the shop itself does not wear. Light is not
+// a redesign here; it is the app finally matching the site a customer has
+// already seen. That is a consistency argument, not a taste argument, and it is
+// the one that matters.
 //
-// MOTION follows Material 3 Expressive (Google I/O 2025, rolled to Android 16):
-// physics-based springs rather than easing curves. Two schemes — standard for
-// utility, expressive for delight. Flutter can do this natively with
-// SpringDescription, so there is no dependency here.
+// ─── WHY EVERY CARD IS WOVEN ─────────────────────────────────────────────
+// Norcha prints — a photo studio in Bole. Its visual language comes from
+// Ethiopian cloth: the netela's cream, the tibeb's woven border, the flag's
+// green-gold-red used as SEPARATE accent roles, never as a tricolour except in
+// the ceremony band. Colour is not decoration here; it is identity.
+//
+// MOTION follows Material 3 Expressive: physics-based springs rather than
+// easing curves. Two schemes — routine for utility, expressive for delight.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The palette. Dark ground, gold as accent, everything else restrained.
+/// The palette. Cream ground, ink text, pine as the primary action colour,
+/// gold as ornament.
 class NorchaPalette {
-  // Grounds — near-black, warmed slightly. Pure #000 reads like a switched-off
-  // screen; a trace of warm in the black reads like ink on dark paper.
-  static const void_ = Color(0xFF08070A);
-  static const ink = Color(0xFF0F0E12);
-  static const raised = Color(0xFF161519);
-  static const raisedHigh = Color(0xFF1E1C22);
+  // ── Grounds ───────────────────────────────────────────────────────────
+  /// Page ground. Netela cream — the colour of hand-spun Ethiopian cotton.
+  static const paper = Color(0xFFF8F4EE);
 
-  // Gold — the whole personality lives here. Three steps, because using one
-  // gold for both a hairline and a button is how a design starts looking flat.
-  static const gold = Color(0xFFC9A227); // primary — marks, active states
-  static const goldDim = Color(0xFF8A6F1E); // hairlines, dividers
-  static const goldBright = Color(0xFFE8C766); // highlights, the foil moment
+  /// Tinted section ground. One step darker, for alternating bands.
+  static const paperDeep = Color(0xFFF0EAE1);
 
-  // Text
-  static const textPrimary = Color(0xFFF4EFE6); // warm white, not #FFF
-  static const textSecondary = Color(0xFFA9A29A);
-  static const textTertiary = Color(0xFF6E6862);
+  /// Card surfaces. Deliberately brighter than the page, so cards read as
+  /// laid ON the paper rather than cut out of it.
+  static const card = Color(0xFFFFFDF9);
 
-  // Semantic
-  static const success = Color(0xFF7FB069);
-  static const warn = Color(0xFFD98E4A);
-  static const danger = Color(0xFFC4553F);
+  // ── Ink ───────────────────────────────────────────────────────────────
+  static const ink = Color(0xFF241F18); // primary text — warm near-black
+  static const inkSoft = Color(0xFF6B6155); // secondary
+  static const inkFaint = Color(0xFF9C9285); // tertiary, labels
+
+  /// Hairlines. Every divider in this app is this colour — one line weight,
+  /// one value, so the grid reads as a system rather than a series of choices.
+  static const line = Color(0xFFE4DBCC);
+
+  // ── Identity colours ──────────────────────────────────────────────────
+  /// Primary UI green. NOT the flag green — this one holds text legibly.
+  static const pine = Color(0xFF0E5C41);
+  static const pineDeep = Color(0xFF0A4632);
+  static const pineSoft = Color(0xFFDCE7DF);
+
+  /// Meskel gold — ornaments, Amharic accents, the foil moments.
+  static const gold = Color(0xFFC1922B);
+  static const goldBright = Color(0xFFE0B84D);
+  static const goldSoft = Color(0xFFF3E9D2);
+
+  /// Accent roles. One product family gets one accent — see [Accent].
+  /// The FLAG colours are ornament-only; `red` is the text-safe red (~6:1).
+  static const flagGreen = Color(0xFF078930);
+  static const flagYellow = Color(0xFFFCDD09);
+  static const flagRed = Color(0xFFDA121A);
+  static const red = Color(0xFFB3261E);
+
+  static const success = Color(0xFF0E5C41);
+  static const warn = Color(0xFFB98A16);
+  static const danger = Color(0xFFB3261E);
+
+  // ── Legacy aliases ────────────────────────────────────────────────────
+  // The dark palette is gone, but screen code still refers to these names in a
+  // few places. Aliased rather than deleted so nothing renders undefined while
+  // the screens migrate — and so the compiler flags every remaining usage for
+  // cleanup instead of silently painting black on cream.
+  static const textPrimary = ink;
+  static const textSecondary = inkSoft;
+  static const textTertiary = inkFaint;
+  static const raised = card;
+  static const raisedHigh = card;
+  static const void_ = paper; // was the dark ground; now the light one
+  static const inkDeep = ink;
 }
 
-/// Type scale. Display sizes are deliberately large — M3 Expressive leans on
-/// emphasis hierarchy, and a price set at 56pt reads as a different class of
-/// object than the same price at 26pt.
-///
-/// Fonts are Google Fonts (google_fonts package). The website uses Bricolage /
-/// EB Garamond / Outfit; woff2 cannot be loaded by Flutter and converting it
-/// needs brotli, which this ARM64 authoring device cannot install. Same
-/// character, different cut — noted so nobody thinks it is an accident.
+/// One accent per product family, applied to the woven card trim and the
+/// detail-page badge. Mirrors the website's table exactly — canvas green,
+/// photo books red, calendars yellow, and so on.
+enum Accent {
+  green(NorchaPalette.pine),
+  red(NorchaPalette.red),
+  yellow(NorchaPalette.warn);
+
+  final Color colour;
+  const Accent(this.colour);
+
+  /// The family → accent map. Must match DESIGN.md on the website.
+  static Accent forFamily(String family) {
+    switch (family) {
+      case 'canvas':
+      case 'mugs':
+        return Accent.green;
+      case 'books':
+      case 'frames':
+        return Accent.red;
+      case 'calendars':
+      case 'prints':
+        return Accent.yellow;
+      default:
+        return Accent.gold;
+    }
+  }
+
+  static const gold = Accent.green; // fallback only; gold is not in the enum
+}
+
+/// Typography.
 class NorchaType {
-  /// Editorial serif. The display face. Prices, headings, moments.
-  static const displayFamily = 'Playfair Display';
+  /// Display serif. Numbers, headlines, the moments that should feel weighty.
+  /// A price set large in a serif reads as WORTH something; the same price in
+  /// sans reads as data entry.
+  static const displayFamily = 'EB Garamond';
 
   /// Clean geometric sans. Everything functional.
-  static const bodyFamily = 'Inter';
+  static const bodyFamily = 'Outfit';
 
   /// Amharic. Not an afterthought — most of the counter speaks it.
   static const amharicFamily = 'Noto Sans Ethiopic';
@@ -71,7 +135,7 @@ class NorchaType {
     height: 1.02,
     fontWeight: FontWeight.w700,
     letterSpacing: -1.2,
-    color: NorchaPalette.textPrimary,
+    color: NorchaPalette.ink,
   );
 
   static const display = TextStyle(
@@ -80,7 +144,7 @@ class NorchaType {
     height: 1.08,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.6,
-    color: NorchaPalette.textPrimary,
+    color: NorchaPalette.ink,
   );
 
   static const title = TextStyle(
@@ -89,16 +153,17 @@ class NorchaType {
     height: 1.2,
     fontWeight: FontWeight.w600,
     letterSpacing: -0.2,
-    color: NorchaPalette.textPrimary,
+    color: NorchaPalette.ink,
   );
 
+  /// Small caps label. Positive tracking — the only place tracking goes up.
   static const sectionLabel = TextStyle(
     fontFamily: bodyFamily,
     fontSize: 10.5,
     height: 1.0,
     fontWeight: FontWeight.w600,
     letterSpacing: 2.4,
-    color: NorchaPalette.textTertiary,
+    color: NorchaPalette.inkFaint,
   );
 
   static const body = TextStyle(
@@ -106,7 +171,7 @@ class NorchaType {
     fontSize: 15,
     height: 1.45,
     fontWeight: FontWeight.w400,
-    color: NorchaPalette.textPrimary,
+    color: NorchaPalette.ink,
   );
 
   static const bodySmall = TextStyle(
@@ -114,24 +179,17 @@ class NorchaType {
     fontSize: 13,
     height: 1.4,
     fontWeight: FontWeight.w400,
-    color: NorchaPalette.textSecondary,
+    color: NorchaPalette.inkSoft,
   );
 
-  static const label = TextStyle(
-    fontFamily: bodyFamily,
-    fontSize: 14,
-    height: 1.2,
-    fontWeight: FontWeight.w600,
-    color: NorchaPalette.textPrimary,
-  );
-
-  static const price = TextStyle(
-    fontFamily: bodyFamily,
+  /// Amharic runs. Same metrics, Ethiopic face — a mixed EN/AM line must not
+  /// visibly jump between the two.
+  static const amharic = TextStyle(
+    fontFamily: amharicFamily,
     fontSize: 15,
-    height: 1.2,
-    fontWeight: FontWeight.w600,
-    fontFeatures: [FontFeature.tabularFigures()],
-    color: NorchaPalette.textPrimary,
+    height: 1.5,
+    fontWeight: FontWeight.w400,
+    color: NorchaPalette.ink,
   );
 
   static const mono = TextStyle(
@@ -140,36 +198,20 @@ class NorchaType {
     height: 1.3,
     fontWeight: FontWeight.w500,
     fontFeatures: [FontFeature.tabularFigures()],
-    color: NorchaPalette.textSecondary,
+    color: NorchaPalette.inkSoft,
   );
 }
 
 /// Motion. Physics, not curves — Material 3 Expressive's core idea.
-///
-/// A spring that arrives without overshoot feels mechanical. A spring with a
-/// little bounce feels alive. The distinction is the whole point of the update.
 class NorchaMotion {
   /// Utilitarian movement — things that should not draw attention.
-  static const standard = SpringDescription(
-    mass: 1,
-    stiffness: 500,
-    damping: 35,
-  );
+  static const standard = SpringDescription(mass: 1, stiffness: 500, damping: 35);
 
-  /// Bouncy. For the moments that should feel good: a quantity changing, a
-  /// selection landing, a sheet opening.
-  static const expressive = SpringDescription(
-    mass: 1,
-    stiffness: 380,
-    damping: 22,
-  );
+  /// Bouncy. For the moments that should feel good.
+  static const expressive = SpringDescription(mass: 1, stiffness: 380, damping: 22);
 
   /// Snappy, minimal overshoot — for small targets like a tap chip.
-  static const snappy = SpringDescription(
-    mass: 1,
-    stiffness: 700,
-    damping: 42,
-  );
+  static const snappy = SpringDescription(mass: 1, stiffness: 700, damping: 42);
 
   static const Duration fast = Duration(milliseconds: 180);
   static const Duration medium = Duration(milliseconds: 320);
@@ -186,110 +228,60 @@ class NorchaShape {
   static const double pill = 999;
 
   static const card = BorderRadius.all(Radius.circular(md));
-  static const sheet = BorderRadius.vertical(top: Radius.circular(xl));
-  static const chip = BorderRadius.all(Radius.circular(pill));
+  static const sheet = BorderRadius.vertical(top: Radius.circular(lg));
 }
 
-/// Elevation, done with light rather than shadow — on a near-black ground a
-/// drop shadow is invisible, so depth comes from a lifted surface + a hairline.
-class NorchaElevation {
-  static List<BoxShadow> get soft => [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.55),
-          blurRadius: 28,
-          offset: const Offset(0, 12),
-        ),
-      ];
+/// The theme.
+class NorchaTheme {
+  static ThemeData light() {
+    final base = ThemeData.light(useMaterial3: true);
 
-  static List<BoxShadow> get lifted => [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.7),
-          blurRadius: 44,
-          offset: const Offset(0, 20),
-        ),
-        BoxShadow(
-          color: NorchaPalette.gold.withOpacity(0.05),
-          blurRadius: 18,
-          spreadRadius: -4,
-        ),
-      ];
-}
-
-/// Gold hairline. Used everywhere a border would normally go.
-class Hairline extends StatelessWidget {
-  final double opacity;
-  final double? width;
-  const Hairline({super.key, this.opacity = 0.22, this.width});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: 1,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            NorchaPalette.gold.withOpacity(0),
-            NorchaPalette.gold.withOpacity(opacity),
-            NorchaPalette.gold.withOpacity(opacity),
-            NorchaPalette.gold.withOpacity(0),
-          ],
-          stops: const [0.0, 0.18, 0.82, 1.0],
+    return base.copyWith(
+      scaffoldBackgroundColor: NorchaPalette.paper,
+      colorScheme: const ColorScheme.light(
+        primary: NorchaPalette.pine,
+        onPrimary: NorchaPalette.card,
+        secondary: NorchaPalette.gold,
+        onSecondary: NorchaPalette.ink,
+        surface: NorchaPalette.card,
+        onSurface: NorchaPalette.ink,
+        error: NorchaPalette.danger,
+        outline: NorchaPalette.line,
+      ),
+      // The app draws its own chrome — no elevation tinting, no default
+      // Material surfaces bleeding through.
+      appBarTheme: const AppBarTheme(
+        backgroundColor: NorchaPalette.paper,
+        foregroundColor: NorchaPalette.ink,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: NorchaPalette.paper,
+          systemNavigationBarIconBrightness: Brightness.dark,
         ),
       ),
+      dividerTheme: const DividerThemeData(
+        color: NorchaPalette.line,
+        thickness: 1,
+        space: 1,
+      ),
+      textTheme: const TextTheme(
+        displayLarge: NorchaType.displayXL,
+        headlineMedium: NorchaType.display,
+        titleLarge: NorchaType.title,
+        bodyMedium: NorchaType.body,
+        bodySmall: NorchaType.bodySmall,
+        labelSmall: NorchaType.sectionLabel,
+      ),
+      splashFactory: InkSparkle.splashFactory,
     );
   }
-}
 
-/// The app theme. Deliberately minimal: most styling lives on the widgets so
-/// that a component can be understood by reading one file.
-ThemeData buildNorchaTheme() {
-  final base = ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    scaffoldBackgroundColor: NorchaPalette.void_,
-  );
-
-  return base.copyWith(
-    colorScheme: const ColorScheme.dark(
-      primary: NorchaPalette.gold,
-      onPrimary: NorchaPalette.void_,
-      secondary: NorchaPalette.goldBright,
-      surface: NorchaPalette.ink,
-      onSurface: NorchaPalette.textPrimary,
-      error: NorchaPalette.danger,
-    ),
-    splashFactory: InkSparkle.splashFactory,
-    appBarTheme: const AppBarTheme(
-      backgroundColor: NorchaPalette.void_,
-      surfaceTintColor: Colors.transparent,
-      elevation: 0,
-      centerTitle: false,
-      systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: NorchaPalette.void_,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-    ),
-    textTheme: const TextTheme(
-      displayLarge: NorchaType.displayXL,
-      headlineMedium: NorchaType.display,
-      titleLarge: NorchaType.title,
-      bodyMedium: NorchaType.body,
-      bodySmall: NorchaType.bodySmall,
-      labelLarge: NorchaType.label,
-    ),
-    dividerTheme: const DividerThemeData(
-      color: Colors.transparent,
-      thickness: 0,
-      space: 0,
-    ),
-    snackBarTheme: const SnackBarThemeData(
-      backgroundColor: NorchaPalette.raisedHigh,
-      contentTextStyle: NorchaType.body,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: NorchaShape.card),
-    ),
-  );
+  /// Kept so `NorchaTheme.dark()` callers do not break — but it returns the
+  /// light theme on purpose. A dark variant is a future decision with a
+  /// recorded reason, not a default.
+  static ThemeData dark() => light();
 }

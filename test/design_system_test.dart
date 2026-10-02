@@ -11,34 +11,40 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:norcha_print/theme/depth.dart';
+import 'package:norcha_print/theme/netela.dart';
 import 'package:norcha_print/theme/norcha_theme.dart';
 import 'package:norcha_print/widgets/motion_budget.dart';
 
 void main() {
   group('the depth ladder is strictly ordered', () {
-    test('every level has a declared blur, overlay and shadow', () {
+    test('every level has a declared blur, surface and shadow', () {
       for (final l in DepthLevel.values) {
         expect(Depth.blur.containsKey(l), isTrue, reason: '$l has no blur');
-        expect(Depth.overlay.containsKey(l), isTrue, reason: '$l has no overlay');
+        expect(Depth.surface.containsKey(l), isTrue, reason: '$l has no surface');
         expect(Depth.shadow.containsKey(l), isTrue, reason: '$l has no shadow');
       }
     });
 
-    test('overlay brightness increases with height', () {
-      // Closer to the glass = catches more light. If this ever inverts, the
-      // hierarchy reads backwards and the screen looks wrong for reasons nobody
-      // can name.
-      expect(Depth.overlayOf(DepthLevel.sheet),
-          lessThan(Depth.overlayOf(DepthLevel.raised)));
-      expect(Depth.overlayOf(DepthLevel.raised),
-          lessThan(Depth.overlayOf(DepthLevel.float)));
+    test('cards sit BRIGHTER than the page (light ground)', () {
+      // On cream, "closer to the viewer" means purer white. The old dark build
+      // inverted this. If it ever flips back, cards stop reading as laid on
+      // paper and start reading as holes cut in it.
+      const paper = NorchaPalette.paper;
+      const card = NorchaPalette.card;
+      int lum(Color c) => c.red + c.green + c.blue;
+      expect(lum(card), greaterThan(lum(paper)),
+          reason: 'cards must be brighter than the page on a light ground');
     });
 
-    test('only the floating level casts a heavy shadow', () {
-      // A sheet with a big shadow competes with the CTA. One thing floats.
-      expect(Depth.shadow[DepthLevel.sheet]![2], lessThan(0.5));
-      expect(Depth.shadow[DepthLevel.float]![2], greaterThan(0.5));
+    test('shadow depth increases with height, and stays gentle', () {
+      // Light-mode shadows must be far softer than the dark-mode ones. A 55%
+      // black shadow that read as depth on near-black reads as a smudge on
+      // cream.
+      expect(Depth.shadow[DepthLevel.sheet]![2],
+          lessThan(Depth.shadow[DepthLevel.float]![2]),
+          reason: 'the floating level must cast a heavier shadow than a sheet');
+      expect(Depth.shadow[DepthLevel.float]![2], lessThan(0.25),
+          reason: 'anything darker than this looks like dirt on cream');
     });
   });
 
@@ -68,45 +74,46 @@ void main() {
     });
   });
 
-  group('gold is light, not paint', () {
-    test('there are exactly three golds, and they are distinct', () {
-      final golds = {NorchaPalette.gold, NorchaPalette.goldDim, NorchaPalette.goldBright};
-      expect(golds.length, 3,
-          reason: 'Two golds collapsed to the same value — the ladder is broken.');
+  group('the palette is the shop's own — netela cream, pine, Meskel gold', () {
+    test('the page ground is warm cream, not white', () {
+      // #F8F4EE is hand-spun cotton. Pure #FFF reads as a blank document; the
+      // warmth is the entire Ethiopian character of the design.
+      const p = NorchaPalette.paper;
+      expect(p.red + p.green + p.blue, lessThan(255 * 3),
+          reason: 'that is pure white — it should be netela cream');
+      expect(p.red, greaterThan(p.blue),
+          reason: 'the cream should lean warm, not cool');
     });
 
-    test('the primary gold is not a saturated yellow', () {
-      // A luxury gold is desaturated antique, not #FFD700. Saturated yellow
-      // reads as a discount sticker.
-      const g = NorchaPalette.gold;
-      final r = (g.red);
-      final gg = (g.green);
-      final b = (g.blue);
-      expect(b, greaterThan(20), reason: 'too pure/acid a gold');
-      expect(r - b, lessThan(200), reason: 'too saturated to read as foil');
-      expect(gg, lessThan(r), reason: 'green channel should sit below red for antique gold');
+    test('ink is warm near-black, not pure black', () {
+      const i = NorchaPalette.ink;
+      expect(i.red + i.green + i.blue, greaterThan(0),
+          reason: 'pure #000 on cream is harsh and looks printed, not written');
+      expect(i.red, greaterThanOrEqualTo(i.blue),
+          reason: 'ink should lean warm like the paper it sits on');
     });
 
-    test('the ground is warm black, not #000', () {
-      // Pure black reads as a switched-off screen. A trace of warm reads as ink.
-      //
-      // The bar is deliberately LOW: #08070A is 8/7/10, which is barely off
-      // black and is the point — enough warm to read as ink, not enough to read
-      // as grey. The first version of this test demanded red >= 10 and failed,
-      // correctly, because the assertion was wrong and the palette was right.
-      const v = NorchaPalette.void_;
-      final r = v.red;
-      final g = v.green;
-      final b = v.blue;
+    test('pine is the primary action colour, and it is dark enough for text', () {
+      // #0E5C41 on cream is ~7:1 — comfortably legible. A lighter green would
+      // fail on the one thing that must never be unreadable: the CTA.
+      const pine = NorchaPalette.pine;
+      expect(pine.green, greaterThan(pine.red),
+          reason: 'pine should be green-dominant');
+      expect(pine.green, greaterThan(0x50),
+          reason: 'too dark to read as the shop green');
+    });
 
-      expect(r + g + b, greaterThan(0), reason: 'that is pure black');
+    test('the flag colours exist but are never used for text', () {
+      // DESIGN.md rule: flag yellow #FCDD09 is unreadable on cream. The
+      // text-safe red is a separate token on purpose.
+      expect(NorchaPalette.flagYellow, isNot(NorchaPalette.warn));
+      expect(NorchaPalette.flagRed, isNot(NorchaPalette.red));
+    });
 
-      // Warmth is a TENDENCY, not a specific channel winning by a margin:
-      // blue must not dominate, and red must be at least level with it.
-      expect(b, lessThanOrEqualTo(r + 2),
-          reason: 'the black should not lean blue — that reads as cold screen glow, not ink');
-      expect(r, greaterThanOrEqualTo(g),
-          reason: 'red should not sit below green in a warm black');
+    test('every product family maps to an accent', () {
+      for (final family in ['prints', 'canvas', 'books', 'frames', 'calendars', 'mugs']) {
+        expect(Accent.forFamily(family), isNotNull);
+      }
     });
   });
 

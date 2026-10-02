@@ -4,24 +4,35 @@
 // here (rather than in a feature folder) means `flutter create .`, IDE run
 // configs and anyone joining later all work without a special case. This was
 // trap #3 in the README — do not move it.
+//
+// v0.2 — the app is five pages behind a shell now, and it talks to the live
+// site. The bone structure lives here so it is obvious what the product is
+// without opening six files.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
+import 'features/about/about_page.dart';
+import 'features/home/home_page.dart';
+import 'features/order/order_page.dart';
 import 'features/quote/quote_page.dart';
+import 'features/shell/app_shell.dart';
+import 'features/upload/upload_page.dart';
+import 'services/notification_service.dart';
 import 'theme/norcha_theme.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // The app is a dark editorial design; forcing a light system UI would fight
-  // the palette on every device.
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: NorchaPalette.void_,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+
+  // Reminders were built in Phase 1 and still work — they are the one thing the
+  // website cannot do. Failure here must never block the app from opening: a
+  // customer at the counter needs prices, not a notification permission dialog.
+  try {
+    await NotificationService.init();
+  } catch (_) {
+    // Deliberately swallowed. Notifications are a bonus, not a dependency.
+  }
+
   runApp(const NorchaApp());
 }
 
@@ -30,17 +41,31 @@ class NorchaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Google Fonts rather than the website's woff2 files: Flutter cannot load
-    // woff2, and converting it needs brotli, which this ARM64 authoring device
-    // cannot install. Same character — editorial serif + clean sans — a
-    // different cut. Swapping in the site's exact fonts later touches no layout.
-    GoogleFonts.config.allowRuntimeFetching = true;
+    // Light, and locked to light. The dark build was accepted once, but the
+    // shop's own identity — and its website — is netela cream. See the note at
+    // the top of norcha_theme.dart.
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: NorchaPalette.paper,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ));
 
     return MaterialApp(
       title: 'Norcha Print',
       debugShowCheckedModeBanner: false,
-      theme: buildNorchaTheme(),
-      home: const QuotePage(),
+      theme: NorchaTheme.light(),
+      themeMode: ThemeMode.light,
+      home: const AppShell(
+        initialIndex: NorchaTab.home,
+        pages: [
+          HomePage(),
+          QuotePage(),
+          OrderPage(),
+          UploadPage(),
+          AboutPage(),
+        ],
+      ),
     );
   }
 }
