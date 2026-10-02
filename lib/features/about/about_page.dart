@@ -308,15 +308,15 @@ class _Action extends StatelessWidget {
 
     return Material(
       color: filled ? Brand.action(c) : Colors.transparent,
-      borderRadius: BorderRadius.circular(Radius.sm),
+      borderRadius: BorderRadius.circular(Corners.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radius.sm),
+        borderRadius: BorderRadius.circular(Corners.sm),
         child: Container(
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Radius.sm),
+            borderRadius: BorderRadius.circular(Corners.sm),
             border: filled ? null : Border.all(color: c.line),
           ),
           child: Row(

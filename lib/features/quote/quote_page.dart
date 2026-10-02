@@ -25,6 +25,7 @@ import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
 import '../../widgets/kinetic_number.dart';
 import '../../widgets/page_scaffold.dart';
+import '../../theme/ghost_numerals.dart';
 
 class QuotePage extends StatefulWidget {
   final ThemeController themes;
@@ -305,7 +306,7 @@ class _Chip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: selected ? colour.withOpacity(0.10) : c.card,
-          borderRadius: BorderRadius.circular(Radius.pill),
+          borderRadius: BorderRadius.circular(Corners.pill),
           border: Border.all(
             color: selected ? colour : c.line,
             width: selected ? 1.4 : 1,
@@ -423,7 +424,7 @@ class _SquareBtn extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: c.card,
-          borderRadius: BorderRadius.circular(Radius.sm),
+          borderRadius: BorderRadius.circular(Corners.sm),
           border: Border.all(color: c.line),
         ),
         child: Icon(icon,
@@ -573,7 +574,7 @@ class _TemporaryNotice extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: c.isDark ? c.cardRaised : Brand.goldSoft,
-        borderRadius: BorderRadius.circular(Radius.sm),
+        borderRadius: BorderRadius.circular(Corners.sm),
         border: Border.all(color: Brand.gold.withOpacity(0.4)),
       ),
       child: Row(
@@ -647,7 +648,7 @@ class _TotalBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     color: Brand.action(c),
-                    borderRadius: BorderRadius.circular(Radius.sm),
+                    borderRadius: BorderRadius.circular(Corners.sm),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

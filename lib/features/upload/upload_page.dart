@@ -218,7 +218,7 @@ class _UploadPageState extends State<UploadPage> {
               itemCount: _photos.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (_, i) => ClipRRect(
-                borderRadius: BorderRadius.circular(Radius.xs),
+                borderRadius: BorderRadius.circular(Corners.xs),
                 child: Image.file(
                   _photos[i],
                   width: 66,
@@ -493,14 +493,14 @@ class _Chip extends StatelessWidget {
     final c = NorchaColors.of(context);
     return Material(
       color: selected ? accent.colour.withOpacity(0.10) : c.card,
-      borderRadius: BorderRadius.circular(Radius.pill),
+      borderRadius: BorderRadius.circular(Corners.pill),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radius.pill),
+        borderRadius: BorderRadius.circular(Corners.pill),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Radius.pill),
+            borderRadius: BorderRadius.circular(Corners.pill),
             border: Border.all(
               color: selected ? accent.colour : c.line,
               width: selected ? 1.4 : 1,
@@ -557,11 +557,11 @@ class _TextInput extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Radius.sm),
+              borderRadius: BorderRadius.circular(Corners.sm),
               borderSide: const BorderSide(color: c.line),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Radius.sm),
+              borderRadius: BorderRadius.circular(Corners.sm),
               borderSide: const BorderSide(color: Brand.action(c), width: 1.5),
             ),
           ),
@@ -583,10 +583,10 @@ class _PrimaryButton extends StatelessWidget {
     final c = NorchaColors.of(context);
     return Material(
       color: onTap == null ? c.inkFaint : Brand.action(c),
-      borderRadius: BorderRadius.circular(Radius.sm),
+      borderRadius: BorderRadius.circular(Corners.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radius.sm),
+        borderRadius: BorderRadius.circular(Corners.sm),
         child: Container(
           height: 52,
           alignment: Alignment.center,

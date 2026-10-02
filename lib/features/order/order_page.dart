@@ -22,6 +22,7 @@ import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
+import '../../theme/ghost_numerals.dart';
 
 class OrderPage extends StatefulWidget {
   final ThemeController themes;
@@ -192,11 +193,11 @@ class _Field extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Radius.sm),
+              borderRadius: BorderRadius.circular(Corners.sm),
               borderSide: BorderSide(color: c.line),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(Radius.sm),
+              borderRadius: BorderRadius.circular(Corners.sm),
               borderSide: BorderSide(color: Brand.action(c), width: 1.5),
             ),
           ),
@@ -289,7 +290,7 @@ class _ResultBlock extends StatelessWidget {
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
                   color: c.groundDeep,
-                  borderRadius: BorderRadius.circular(Radius.xs),
+                  borderRadius: BorderRadius.circular(Corners.xs),
                 ),
                 child: Text(
                   r.stageNote.isEmpty
@@ -389,7 +390,7 @@ class _PrimaryButton extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: onTap == null ? c.inkFaint : Brand.action(c),
-          borderRadius: BorderRadius.circular(Radius.sm),
+          borderRadius: BorderRadius.circular(Corners.sm),
         ),
         child: busy
             ? SizedBox(

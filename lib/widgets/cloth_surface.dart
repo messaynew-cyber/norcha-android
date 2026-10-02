@@ -92,7 +92,7 @@ class ClothSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
-    final r = radius ?? BorderRadius.circular(Radius.md);
+    final r = radius ?? BorderRadius.circular(Corners.md);
     final spec = Depth.shadowOf(level, c.isDark);
     final fill = level == DepthLevel.ground ? c.ground : c.card;
 

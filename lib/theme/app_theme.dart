@@ -196,7 +196,12 @@ class Motion {
 }
 
 /// Shape tokens.
-class Radius {
+///
+/// 🔴 NAMED `Corners`, NOT `Radius` — Flutter already owns `Radius`, and the
+/// colliding name made every `Radius.circular(...)` in the app resolve to the
+/// wrong class. This is the same trap as `Size` in Phase 1 (see the README):
+/// check the name against material.dart before introducing a token class.
+class Corners {
   static const double xs = 8;
   static const double sm = 12;
   static const double md = 18;
@@ -324,5 +329,35 @@ class NorchaThemeData {
       ),
       splashFactory: InkSparkle.splashFactory,
     );
+  }
+}
+
+/// One accent per product family, applied to a card's woven edge and the detail
+/// badge. Mirrors the website's DESIGN.md table exactly — canvas green, photo
+/// books red, calendars yellow — so the app and the site agree on what colour a
+/// product is.
+enum Accent {
+  green(Brand.flagGreen),
+  red(Brand.red),
+  yellow(Brand.warn);
+
+  final Color colour;
+  const Accent(this.colour);
+
+  /// The family → accent map. Must match the website.
+  static Accent forFamily(String family) {
+    switch (family) {
+      case 'canvas':
+      case 'mugs':
+        return Accent.green;
+      case 'books':
+      case 'frames':
+        return Accent.red;
+      case 'calendars':
+      case 'prints':
+        return Accent.yellow;
+      default:
+        return Accent.green;
+    }
   }
 }

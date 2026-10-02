@@ -86,7 +86,7 @@ class _Hero extends StatelessWidget {
     final c = NorchaColors.of(context);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(Radius.lg),
+      borderRadius: BorderRadius.circular(Corners.lg),
       child: AspectRatio(
         aspectRatio: 16 / 11,
         child: Stack(
@@ -207,7 +207,7 @@ class _FamilyCard extends StatelessWidget {
             // The photograph, square, clipped into the card's left edge.
             ClipRRect(
               borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(17)), // Radius.md (18) minus the 1px edge
+                  left: Radius.circular(17)), // Corners.md (18) minus the 1px edge
               child: Image.asset(
                 _images[family]!,
                 width: 92,
@@ -378,15 +378,15 @@ class _MiniAction extends StatelessWidget {
 
     return Material(
       color: filled ? Brand.action(c) : Colors.transparent,
-      borderRadius: BorderRadius.circular(Radius.sm),
+      borderRadius: BorderRadius.circular(Corners.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(Radius.sm),
+        borderRadius: BorderRadius.circular(Corners.sm),
         child: Container(
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(Radius.sm),
+            borderRadius: BorderRadius.circular(Corners.sm),
             border: filled ? null : Border.all(color: c.line),
           ),
           child: Row(
