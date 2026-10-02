@@ -392,7 +392,7 @@ class _Quantity extends StatelessWidget {
               // The count is a number, so it gets the display serif. It also
               // animates, because watching the number move is what makes a
               // stepper feel responsive rather than merely functional.
-              KineticNumber(
+              child: KineticNumber(
                 value: '$qty',
                 style: NorchaType.display(c).copyWith(fontSize: 26),
               ),
