@@ -1,0 +1,114 @@
+# Norcha Print — build + verify.
+#
+# 🔴 THE PHONE AUTHORS, GITHUB COMPILES.
+# This Redmi is ARM64 and Flutter only ships an x86_64 Linux Dart VM, so
+# `flutter --version` dies with "Exec format error" locally. There is no ARM64
+# tarball — it is a missing artifact, not a bug to fix. So every APK in this
+# repo is produced here, on an ubuntu-latest runner.
+#
+# Job order matters: cheap proof first, expensive artifact second. A broken
+# contract test should fail in 40 seconds, not after a 6-minute APK build.
+
+name: Luxury Build
+
+on:
+  push:
+    branches: [main, phase2-api]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Fast, network-free proof that the ports still agree with the website.
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Contract + parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+
+      - name: Unit + contract + design-system tests
+        run: flutter test --reporter expanded
+
+  # ---------------------------------------------------------------------------
+  # 2. The artifact. Only runs when job 1 is green.
+  # ---------------------------------------------------------------------------
+  apk:
+    name: Release APK
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: 'stable'
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Stage artifact with a readable name
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             out/norcha-luxury-${{ github.run_number }}.apk
+          sha256sum out/*.apk > out/SHA256SUMS.txt
+          cat out/SHA256SUMS.txt
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: norcha-luxury-apk
+          path: out/*
+          retention-days: 30
+
+      # A release asset is how the phone actually gets the APK — downloading a
+      # workflow artifact requires auth and a zip extract; a release asset is
+      # one tap. This is the delivery path that matters.
+      - name: Publish to a Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.2.${{ github.run_number }}
+          name: Norcha Luxury v0.2.${{ github.run_number }}
+          body: |
+            Automated build from ${{ github.sha }}.
+
+            Signed with the Android **debug** key on purpose — this is a
+            sideload build for review, not a store submission. See README.
+          files: |
+            out/norcha-luxury-*.apk
+            out/SHA256SUMS.txt
+          draft: false
+          prerelease: true
