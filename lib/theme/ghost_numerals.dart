@@ -26,6 +26,7 @@
 // Stack, under a scrim, or on a page whose header has clear space. A watermark
 // behind a price is a bug, not an effect.
 
+
 import 'package:flutter/material.dart';
 
 import 'app_theme.dart';
@@ -169,7 +170,14 @@ class _StrokePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
-    final builder = TextPainter(
+    // A stroked glyph, the Flutter equivalent of -webkit-text-stroke.
+    //
+    // Flutter cannot stroke a TextStyle directly, but it CAN paint the text
+    // with a `foreground` Paint instead of a `color`, and a Paint with
+    // PaintingStyle.stroke does exactly the woven-outline thing the website
+    // does. That is the whole implementation — no glyph-outline extraction, no
+    // custom path building, and it works for Ethiopic the same as for Latin.
+    final painter = TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
@@ -177,24 +185,20 @@ class _StrokePainter extends CustomPainter {
           fontSize: size,
           height: 1.0,
           fontWeight: FontWeight.w600,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = strokeWidth
+            ..strokeJoin = StrokeJoin.round
+            ..color = colour,
         ),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final glyph = builder.text;
-    if (glyph == null) return;
-
-    for (final line in glyph.lines) {
-      final path = line.toPath()..shift(Offset.zero);
-      canvas.drawPath(
-        path,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
-          ..color = colour,
-      );
-    }
+    // Centred on the box the CustomPaint was given.
+    final dx = (canvasSize.width - painter.width) / 2;
+    final dy = (canvasSize.height - painter.height) / 2;
+    painter.paint(canvas, Offset(dx, dy));
   }
 
   @override

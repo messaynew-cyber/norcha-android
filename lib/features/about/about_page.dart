@@ -2,12 +2,12 @@
 //
 // The page a customer opens when they are standing outside looking for a sign,
 // or when they want to talk to a person. It answers: where, when, how to reach
-// us, and — the question this whole project keeps circling — what actually
-// happens to my photos.
+// us, and — the question this project keeps circling — what actually happens to
+// my photos.
 //
 // That last section is not filler. A print shop asking for family photographs
-// owes a plain answer about retention, and putting it on a page the customer
-// can read at leisure is how the shop earns the trust the upload flow needs.
+// owes a plain answer about retention, and putting it on a page a customer can
+// read at leisure is how the shop earns the trust the upload flow needs.
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -15,12 +15,16 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/delivery.dart';
 import '../../core/holidays.dart';
 import '../../core/pricing.dart';
-import '../shell/app_shell.dart';
-import '../../theme/norcha_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/ghost_numerals.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/page_scaffold.dart';
+import '../shell/app_shell.dart';
 
 class AboutPage extends StatelessWidget {
-  const AboutPage({super.key});
+  final ThemeController themes;
+  const AboutPage({super.key, required this.themes});
 
   @override
   Widget build(BuildContext context) {
@@ -28,75 +32,72 @@ class AboutPage extends StatelessWidget {
     final occasion = NorchaHolidays.current(now);
     final ready = NorchaDelivery.assess(now, null, 2);
 
-    return SafeArea(
-      bottom: false,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          const NorchaHeader(
-            eyebrow: 'The studio',
-            title: 'Norcha Print,\nBole.',
-            amharic: 'ኖርቻ ፕሪንት · ቦሌ',
-          ),
+    return PageScaffold(
+      chapter: 5,
+      eyebrow: 'The studio',
+      title: 'Norcha Print,\nBole.',
+      amharic: 'ኖርቻ ፕሪንት · ቦሌ',
+      ghostStyle: GhostStyle.outline,
+      trailing: ThemeButton(themes: themes),
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: _OpenCard(),
+        ),
+        const SizedBox(height: 12),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: _ReachCard(),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: _TimingCard(ready: ready, occasion: occasion),
+        ),
+        const SizedBox(height: 12),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: _PhotoPrivacyCard(),
+        ),
+        const SizedBox(height: 26),
+        const Center(child: _Monogram()),
+      ],
+    );
+  }
+}
 
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: _OpenCard(),
-          ),
+/// The ኖ mark, set in the Amharic face — the same character as the launcher icon.
+class _Monogram extends StatelessWidget {
+  const _Monogram();
 
-          const SizedBox(height: 14),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: _ReachCard(),
+  @override
+  Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+    return Column(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: c.card,
+            shape: BoxShape.circle,
+            border: Border.all(color: Brand.gold, width: 1),
           ),
-
-          const SizedBox(height: 14),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _TimingCard(ready: ready, occasion: occasion),
-          ),
-
-          const SizedBox(height: 14),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: _PhotoPrivacyCard(),
-          ),
-
-          const SizedBox(height: 24),
-          Center(
-            child: Column(
-              children: [
-                // The monogram, as a mark rather than an image — the same ኖ that
-                // is the launcher icon, set in the Amharic face.
-                Container(
-                  width: 52,
-                  height: 52,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.card,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Brand.gold, width: 1),
-                  ),
-                  child: Text(
-                    'ኖ',
-                    style: TextStyle(
-                      fontFamily: NorchaType.amharicText(c)Family,
-                      fontSize: 24,
-                      height: 1.1,
-                      color: Brand.action(c),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text('${Shop.name} · v0.2',
-                    style: NorchaType.body(c)Small(c).copyWith(fontSize: 12)),
-              ],
+          child: Text(
+            '\u1296', // ኖ
+            style: TextStyle(
+              fontFamily: NorchaTypeFace.amharic,
+              fontSize: 26,
+              height: 1.1,
+              color: Brand.action(c),
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Text('${Shop.name} · v0.3', style: NorchaType.bodySmall(c).copyWith(fontSize: 12)),
+      ],
     );
   }
 }
@@ -106,13 +107,14 @@ class _OpenCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return ClothSurface(
       accent: Brand.action(c),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('FIND US', style: NorchaType.sectionLabel(c)),
+          Text('FIND US', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           _Line(icon: Icons.place_outlined, text: Shop.city),
           const SizedBox(height: 4),
@@ -143,17 +145,16 @@ class _ReachCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return ClothSurface(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('TALK TO A PERSON', style: NorchaType.sectionLabel(c)),
+          Text('TALK TO A PERSON', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
-          SelectableText(
-            Shop.phone,
-            style: NorchaType.title(c).copyWith(fontSize: 21),
-          ),
+          SelectableText(Shop.phone,
+              style: NorchaType.title(c).copyWith(fontSize: 21)),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -162,10 +163,8 @@ class _ReachCard extends StatelessWidget {
                   label: 'WhatsApp',
                   icon: Icons.chat_outlined,
                   filled: true,
-                  onTap: () => launchUrl(
-                    Uri.parse('https://wa.me/${Shop.wa}'),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  onTap: () => launchUrl(Uri.parse('https://wa.me/${Shop.wa}'),
+                      mode: LaunchMode.externalApplication),
                 ),
               ),
               const SizedBox(width: 10),
@@ -173,10 +172,9 @@ class _ReachCard extends StatelessWidget {
                 child: _Action(
                   label: 'Call',
                   icon: Icons.call_outlined,
-                  onTap: () => launchUrl(
-                    Uri.parse('tel:${Shop.wa}'),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  filled: false,
+                  onTap: () => launchUrl(Uri.parse('tel:${Shop.wa}'),
+                      mode: LaunchMode.externalApplication),
                 ),
               ),
             ],
@@ -187,9 +185,8 @@ class _ReachCard extends StatelessWidget {
   }
 }
 
-/// What the app actually computes, shown with its reasoning. This is the same
-/// engine the quote screen uses — showing it here means the customer can see
-/// WHY a date is what it is, rather than trusting a black box.
+/// What the app actually computes, shown with its reasoning. Same engine the
+/// quote screen uses, so the customer can see WHY a date is what it is.
 class _TimingCard extends StatelessWidget {
   final DeliveryAssessment ready;
   final Occasion? occasion;
@@ -198,31 +195,30 @@ class _TimingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return ClothSurface(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('HOW LONG IT TAKES', style: NorchaType.sectionLabel(c)),
+          Text('HOW LONG IT TAKES', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
-          Text(
-            NorchaDelivery.readyPhrase(ready, 'en'),
-            style: NorchaType.title(c).copyWith(fontSize: 20),
-          ),
+          Text(NorchaDelivery.readyPhrase(ready, 'en'),
+              style: NorchaType.title(c).copyWith(fontSize: 20)),
           const SizedBox(height: 8),
           Text(
             'A photo book takes two production days; prints and canvas take '
             'less. Sundays the shop is shut, so they are not counted.',
-            style: NorchaType.body(c)Small(c).copyWith(fontSize: 13),
+            style: NorchaType.bodySmall(c).copyWith(fontSize: 13),
           ),
           if (occasion != null) ...[
             const SizedBox(height: 16),
-            const Divider(color: c.line, height: 1),
+            Divider(color: c.line, height: 1),
             const SizedBox(height: 14),
             Text(
               '${occasion!.name('en')} is in ${occasion!.days} days. '
               'Last day to order is ${NorchaDelivery.fmt(occasion!.orderBy, 'en')}.',
-              style: NorchaType.body(c)Small(c).copyWith(fontSize: 13),
+              style: NorchaType.bodySmall(c).copyWith(fontSize: 13),
             ),
           ],
         ],
@@ -237,17 +233,17 @@ class _PhotoPrivacyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return ClothSurface(
       accent: Brand.gold,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.lock_outline_rounded,
-                  size: 17, color: Brand.gold),
-              SizedBox(width: 9),
+              const Icon(Icons.lock_outline_rounded, size: 17, color: Brand.gold),
+              const SizedBox(width: 9),
               Text('YOUR PHOTOS', style: NorchaType.sectionLabel(c)),
             ],
           ),
@@ -255,15 +251,14 @@ class _PhotoPrivacyCard extends StatelessWidget {
           Text(
             'We keep your photos for 30 days so we can print them, then we '
             'delete them. We do not publish them, and we do not sell them.',
-            style: NorchaType.body(c)Small(c).copyWith(
-                fontSize: 13.5, color: c.ink),
+            style: NorchaType.bodySmall(c).copyWith(fontSize: 13.5, color: c.ink),
           ),
           const SizedBox(height: 12),
           Text(
             'Order lookup needs both your reference AND the phone number you '
             'ordered with. One without the other gets no answer — so nobody can '
             'use it to check whether an order exists.',
-            style: NorchaType.body(c)Small(c).copyWith(fontSize: 12.5),
+            style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
           ),
         ],
       ),
@@ -278,6 +273,7 @@ class _Line extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -285,8 +281,7 @@ class _Line extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(text,
-              style: NorchaType.body(c)Small(c).copyWith(
-                  fontSize: 14, color: c.ink)),
+              style: NorchaType.bodySmall(c).copyWith(fontSize: 14, color: c.ink)),
         ),
       ],
     );
@@ -308,7 +303,8 @@ class _Action extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? c.card : Brand.action(c);
+    final c = NorchaColors.of(context);
+    final fg = filled ? Brand.onAction(c) : Brand.action(c);
 
     return Material(
       color: filled ? Brand.action(c) : Colors.transparent,
@@ -321,9 +317,7 @@ class _Action extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(Radius.sm),
-            border: filled
-                ? null
-                : Border.all(color: Brand.action(c).withOpacity(0.35)),
+            border: filled ? null : Border.all(color: c.line),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -331,10 +325,8 @@ class _Action extends StatelessWidget {
               Icon(icon, size: 16, color: fg),
               const SizedBox(width: 7),
               Text(label,
-                  style: NorchaType.body(c)Small(c).copyWith(
-                      color: fg,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13.5)),
+                  style: NorchaType.bodySmall(c).copyWith(
+                      color: fg, fontWeight: FontWeight.w600, fontSize: 13.5)),
             ],
           ),
         ),

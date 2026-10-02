@@ -22,8 +22,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
 import '../../services/photo_upload.dart';
-import '../../theme/norcha_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/ghost_numerals.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/loading_mark.dart';
+import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
 class UploadPage extends StatefulWidget {
@@ -355,6 +359,7 @@ class _UploadOffCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -485,6 +490,7 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Material(
       color: selected ? accent.colour.withOpacity(0.10) : c.card,
       borderRadius: BorderRadius.circular(Radius.pill),
@@ -531,6 +537,7 @@ class _TextInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -573,6 +580,7 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Material(
       color: onTap == null ? c.inkFaint : Brand.action(c),
       borderRadius: BorderRadius.circular(Radius.sm),
