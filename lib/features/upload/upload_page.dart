@@ -19,6 +19,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
 import '../../services/photo_upload.dart';
@@ -32,7 +33,8 @@ import '../shell/app_shell.dart';
 
 class UploadPage extends StatefulWidget {
   final ThemeController themes;
-  const UploadPage({super.key, required this.themes});
+  final LangController langs;
+  const UploadPage({super.key, required this.themes, required this.langs});
 
   @override
   State<UploadPage> createState() => _UploadPageState();
@@ -138,21 +140,20 @@ class _UploadPageState extends State<UploadPage> {
   ///
   /// Built here rather than inline: a nested ternary inside a string
   /// interpolation does not parse in Dart, and the analyser is right to refuse.
-  String get _sendLabel {
-    if (_sending) return 'Sending…';
-    if (_photos.isEmpty) return 'Send photos';
-    return 'Send ${_photos.length} photo${_photos.length == 1 ? '' : 's'}';
+  String _sendLabel(NorchaLang lang) {
+    if (_sending) return L.t('upload.sending', lang);
+    if (_photos.isEmpty) return L.t('upload.send', lang);
+    return '${L.t('upload.sendN', lang)} ${_photos.length}';
   }
 
   @override
   Widget build(BuildContext context) {
     return PageScaffold(
       chapter: 4,
-      eyebrow: 'Send photos',
-      title: 'Upload your\noriginals.',
-      amharic: 'ፎቶዎችዎን ይላኩ',
+      eyebrowKey: 'upload.eyebrow',
+      titleKey: 'upload.title',
       ghostStyle: GhostStyle.soft,
-      trailing: ThemeButton(themes: widget.themes),
+      trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -175,14 +176,14 @@ class _UploadPageState extends State<UploadPage> {
 
   Widget _form(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     final product = NorchaData.products[_family]!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Same originals, no compression. You get a reference number you can '
-          'read down a phone line.',
+          L.t('upload.blurb', lang),
           style: NorchaType.bodySmall(c).copyWith(fontSize: 14),
         ),
         const SizedBox(height: 20),
@@ -205,15 +206,17 @@ class _UploadPageState extends State<UploadPage> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _photos.isEmpty ? 'Choose photos' : '${_photos.length} selected',
+                  _photos.isEmpty
+                      ? L.t('upload.choose', lang)
+                      : '${_photos.length} ${L.t('upload.selected', lang)}',
                   style: NorchaType.title(c).copyWith(fontSize: 17),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _photos.isEmpty
-                      ? 'Up to ${PhotoUpload.maxFiles} · max '
-                          '${PhotoUpload.maxPerFileMb} MB each'
-                      : 'Tap to choose again',
+                      ? '${L.t('upload.upTo', lang)} ${PhotoUpload.maxFiles} · '
+                          'max ${PhotoUpload.maxPerFileMb} MB'
+                      : L.t('upload.again', lang),
                   style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
                 ),
               ],
@@ -250,7 +253,7 @@ class _UploadPageState extends State<UploadPage> {
         ],
 
         const SizedBox(height: 22),
-        Text('WHAT IS IT FOR?', style: NorchaType.sectionLabel(c)),
+        Text(L.t('upload.forWhat', lang), style: NorchaType.sectionLabel(c)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -258,7 +261,10 @@ class _UploadPageState extends State<UploadPage> {
           children: [
             for (final f in NorchaData.products.keys)
               _Chip(
-                label: NorchaData.products[f]!.label.en,
+                label: lang.isAmharic
+                    ? NorchaData.products[f]!.label.am
+                    : NorchaData.products[f]!.label.en,
+                amharic: lang.isAmharic,
                 accent: Accent.forFamily(f),
                 selected: _family == f,
                 onTap: () => setState(() {
@@ -270,7 +276,7 @@ class _UploadPageState extends State<UploadPage> {
         ),
 
         const SizedBox(height: 18),
-        Text('SIZE (OPTIONAL)', style: NorchaType.sectionLabel(c)),
+        Text(L.t('upload.sizeOpt', lang), style: NorchaType.sectionLabel(c)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -288,19 +294,19 @@ class _UploadPageState extends State<UploadPage> {
         ),
 
         const SizedBox(height: 20),
-        _TextInput(controller: _name, label: 'YOUR NAME', hint: 'Abebe B.'),
+        _TextInput(controller: _name, label: L.t('upload.yourName', lang), hint: 'Abebe B.'),
         const SizedBox(height: 14),
         _TextInput(
           controller: _phone,
-          label: 'PHONE',
+          label: L.t('upload.phone', lang),
           hint: '09•• ••• •••',
           keyboard: TextInputType.phone,
         ),
         const SizedBox(height: 14),
         _TextInput(
           controller: _note,
-          label: 'ANYTHING WE SHOULD KNOW',
-          hint: 'Optional',
+          label: L.t('upload.note', lang),
+          hint: L.t('upload.optional', lang),
           lines: 2,
         ),
 
@@ -342,20 +348,19 @@ class _UploadPageState extends State<UploadPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Text('${(_progress * 100).round()}% sent',
+          Text('${(_progress * 100).round()}% ${L.t('upload.sent', lang)}',
               style: NorchaType.bodySmall(c).copyWith(fontSize: 12)),
           const SizedBox(height: 14),
         ],
 
         _PrimaryButton(
-          label: _sendLabel,
+          label: _sendLabel(lang),
           busy: _sending,
           onTap: (_sending || _photos.isEmpty) ? null : _send,
         ),
         const SizedBox(height: 12),
         Text(
-          'The chat still works and it always will — WhatsApp is right there if '
-          'you would rather send them that way.',
+          L.t('upload.keepChat', lang),
           style: NorchaType.bodySmall(c).copyWith(fontSize: 12),
         ),
       ],
@@ -371,6 +376,7 @@ class _UploadOffCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -386,15 +392,14 @@ class _UploadOffCard extends StatelessWidget {
                       size: 20, color: Brand.warn),
                   const SizedBox(width: 11),
                   Expanded(
-                    child: Text('Upload is not switched on yet',
+                    child: Text(L.t('upload.offTitle', lang),
                         style: NorchaType.title(c).copyWith(fontSize: 16)),
                   ),
                 ],
               ),
               const SizedBox(height: 12),
               Text(
-                'Please send your photos on WhatsApp — it works right now, and '
-                'you keep the chat.',
+                L.t('upload.offBody', lang),
                 style: NorchaType.bodySmall(c).copyWith(fontSize: 13.5),
               ),
             ],
@@ -402,7 +407,7 @@ class _UploadOffCard extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _PrimaryButton(
-          label: 'Send on WhatsApp',
+          label: L.t('upload.waSend', lang),
           onTap: () => launchUrl(Uri.parse('https://wa.me/${Shop.wa}'),
               mode: LaunchMode.externalApplication),
         ),
@@ -420,6 +425,7 @@ class _SuccessCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     final text = Uri.encodeComponent(
         'Hello Norcha Print! Reference: ${success.code}');
 
@@ -445,13 +451,13 @@ class _SuccessCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('${success.stored} photos received',
+                    child: Text('${success.stored} ${L.t('upload.received', lang)}',
                         style: NorchaType.title(c).copyWith(fontSize: 18)),
                   ),
                 ],
               ),
               const SizedBox(height: 18),
-              Text('YOUR REFERENCE', style: NorchaType.sectionLabel(c)),
+              Text(L.t('upload.yourRef', lang), style: NorchaType.sectionLabel(c)),
               const SizedBox(height: 8),
               SelectableText(
                 success.code,
@@ -461,8 +467,7 @@ class _SuccessCard extends StatelessWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'Keep this. A person at the studio still confirms sizes and '
-                'price before printing — message us and we will confirm.',
+                L.t('upload.keepRef', lang),
                 style: NorchaType.bodySmall(c).copyWith(fontSize: 13),
               ),
             ],
@@ -470,7 +475,7 @@ class _SuccessCard extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         _PrimaryButton(
-          label: 'Send the reference on WhatsApp',
+          label: L.t('upload.refWa', lang),
           onTap: () => launchUrl(
             Uri.parse('https://wa.me/${Shop.wa}?text=$text'),
             mode: LaunchMode.externalApplication,
@@ -483,6 +488,7 @@ class _SuccessCard extends StatelessWidget {
 
 class _Chip extends StatelessWidget {
   final String label;
+  final bool amharic;
   final Accent accent;
   final bool selected;
   final VoidCallback onTap;
@@ -492,6 +498,7 @@ class _Chip extends StatelessWidget {
     required this.accent,
     required this.selected,
     required this.onTap,
+    this.amharic = false,
   });
 
   @override
@@ -514,7 +521,8 @@ class _Chip extends StatelessWidget {
         child: Text(
           label,
           style: NorchaType.bodySmall(c).copyWith(
-            fontSize: 13,
+            fontFamily: amharic ? NorchaTypeFace.amharic : NorchaTypeFace.body,
+            fontSize: amharic ? 12.5 : 13,
             color: selected ? accent.colour : c.inkSoft,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),

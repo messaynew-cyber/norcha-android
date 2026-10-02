@@ -69,6 +69,8 @@ def strip_comments(src):
         out.append(res)
     return "\n".join(out)
 
+
+
 # ---- 3 & 4 per file -----------------------------------------------------------
 for p in dart_files:
     raw = open(p).read()
@@ -79,7 +81,12 @@ for p in dart_files:
             imps.append(l); body_start = i + 1
         elif l.startswith("//"):
             body_start = i + 1
-    body = "\n".join(lines[body_start:])
+    body = strip_comments("\n".join(lines[body_start:]))
+    # Also blank out string literal CONTENTS: a UI label like 'Quote' is a word,
+    # not a reference to the Quote class. Without this, every translated string
+    # that happens to match a class name produces a phantom import error.
+    body = re.sub(r"'[^'\n]*'", "''", body)
+    body = re.sub(r'"[^"\n]*"', '""', body)
 
     resolved = set()
     for l in imps:

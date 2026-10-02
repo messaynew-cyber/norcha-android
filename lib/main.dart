@@ -4,13 +4,14 @@
 // here means `flutter create .`, IDE run configs and anyone joining later all
 // work without a special case. This was trap #3 in the README — do not move it.
 //
-// v0.3 — light AND dark, switchable; a drawn loading mark; Ge'ez ghost numerals;
-// motion throughout. The theme controller is created once here and threaded
-// down, because a provider package for forty lines of state would be furniture.
+// v0.4 — dual language, Ethiopian motif layer, proportional size selector,
+// motion throughout. Two controllers are created here and threaded down: theme
+// and language. A provider package for two ChangeNotifiers would be furniture.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'core/lang.dart';
 import 'features/about/about_page.dart';
 import 'features/home/home_page.dart';
 import 'features/order/order_page.dart';
@@ -36,12 +37,17 @@ void main() async {
   final themes = ThemeController();
   await themes.load();
 
-  runApp(NorchaApp(themes: themes));
+  final langs = LangController();
+  await langs.load();
+
+  runApp(NorchaApp(themes: themes, langs: langs));
 }
 
 class NorchaApp extends StatefulWidget {
   final ThemeController themes;
-  const NorchaApp({super.key, required this.themes});
+  final LangController langs;
+
+  const NorchaApp({super.key, required this.themes, required this.langs});
 
   @override
   State<NorchaApp> createState() => _NorchaAppState();
@@ -53,17 +59,19 @@ class _NorchaAppState extends State<NorchaApp> {
   @override
   void initState() {
     super.initState();
-    widget.themes.addListener(_onThemeChanged);
+    widget.themes.addListener(_onChanged);
+    widget.langs.addListener(_onChanged);
     _applySystemChrome();
   }
 
   @override
   void dispose() {
-    widget.themes.removeListener(_onThemeChanged);
+    widget.themes.removeListener(_onChanged);
+    widget.langs.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onThemeChanged() {
+  void _onChanged() {
     _applySystemChrome();
     setState(() {});
   }
@@ -84,26 +92,31 @@ class _NorchaAppState extends State<NorchaApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Norcha Print',
-      debugShowCheckedModeBanner: false,
-      theme: NorchaThemeData.build(_c),
-      // themeMode is driven entirely by the controller; the resolved colours
-      // are passed explicitly so there is one source of truth, not two that can
-      // disagree mid-transition.
-      themeMode: _c.isDark ? ThemeMode.dark : ThemeMode.light,
-      themeAnimationDuration: Motion.medium,
-      themeAnimationCurve: Curves.easeInOutCubic,
-      home: AppShell(
-        themes: widget.themes,
-        initialIndex: NorchaTab.home,
-        pages: [
-          HomePage(themes: widget.themes),
-          QuotePage(themes: widget.themes),
-          OrderPage(themes: widget.themes),
-          UploadPage(themes: widget.themes),
-          AboutPage(themes: widget.themes),
-        ],
+    return LangScope(
+      controller: widget.langs,
+      child: MaterialApp(
+        title: 'Norcha Print',
+        debugShowCheckedModeBanner: false,
+        theme: NorchaThemeData.build(_c),
+        themeMode: _c.isDark ? ThemeMode.dark : ThemeMode.light,
+        themeAnimationDuration: Motion.medium,
+        themeAnimationCurve: Curves.easeInOutCubic,
+        // Amharic needs a locale set or Flutter's own widgets (the date picker,
+        // long-press menus) stay English underneath an Amharic screen.
+        locale: Locale(widget.langs.lang.code),
+        supportedLocales: const [Locale('en'), Locale('am')],
+        home: AppShell(
+          themes: widget.themes,
+          langs: widget.langs,
+          initialIndex: NorchaTab.home,
+          pages: [
+            HomePage(themes: widget.themes, langs: widget.langs),
+            QuotePage(themes: widget.themes, langs: widget.langs),
+            OrderPage(themes: widget.themes, langs: widget.langs),
+            UploadPage(themes: widget.themes, langs: widget.langs),
+            AboutPage(themes: widget.themes, langs: widget.langs),
+          ],
+        ),
       ),
     );
   }

@@ -13,59 +13,63 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/holidays.dart';
+import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/ethiopian.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
 class HomePage extends StatelessWidget {
   final ThemeController themes;
-  const HomePage({super.key, required this.themes});
+  final LangController langs;
+  const HomePage({super.key, required this.themes, required this.langs});
 
   @override
   Widget build(BuildContext context) {
+    final lang = LangController.of(context).lang;
     final occasion = NorchaHolidays.current(DateTime.now());
     final families = NorchaData.products.keys.toList();
 
     return PageScaffold(
       chapter: 1,
-      eyebrow: 'Norcha Print · Bole',
-      title: 'Photo printing,\ndone properly.',
-      amharic: 'የፎቶ ህትመት በቦሌ',
+      eyebrowKey: 'home.eyebrow',
+      titleKey: 'home.title',
       ghostStyle: GhostStyle.soft,
-      trailing: ThemeButton(themes: themes),
+      telafi: true,
+      trailing: HeaderControls(themes: themes, langs: langs),
       children: [
         // The hero. Full-bleed image with the studio's name set over it and a
         // scrim, because a photograph behind text with no scrim is unreadable
         // on a bad screen in daylight — which is where this app is used.
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: _Hero(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: _Hero(lang: lang),
         ),
 
         if (occasion != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-            child: _DeadlineBanner(occasion: occasion),
+            child: _DeadlineBanner(occasion: occasion, lang: lang),
           ),
 
-        const Padding(
-          padding: EdgeInsets.fromLTRB(24, 28, 24, 10),
-          child: _SectionRule(label: 'WHAT WE MAKE'),
+        EthiopianSectionHeader(
+          label: L.t('home.section.products', lang),
+          padding: const EdgeInsets.fromLTRB(24, 30, 24, 12),
         ),
 
         for (var i = 0; i < families.length; i++)
           Padding(
             padding: EdgeInsets.fromLTRB(24, i == 0 ? 0 : 10, 24, 0),
-            child: _FamilyCard(family: families[i]),
+            child: _FamilyCard(family: families[i], lang: lang),
           ),
 
-        const Padding(
-          padding: EdgeInsets.fromLTRB(24, 28, 24, 10),
-          child: _SectionRule(label: 'FIND US'),
+        EthiopianSectionHeader(
+          label: L.t('home.section.find', lang),
+          padding: const EdgeInsets.fromLTRB(24, 30, 24, 12),
         ),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24),
@@ -79,7 +83,8 @@ class HomePage extends StatelessWidget {
 /// The hero. The prints photograph, scrimmed, with the shop's promise set over
 /// it in the display serif.
 class _Hero extends StatelessWidget {
-  const _Hero();
+  final NorchaLang lang;
+  const _Hero({required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -125,26 +130,37 @@ class _Hero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'SAME-DAY PICKUP',
-                    style: TextStyle(
-                      fontFamily: NorchaTypeFace.body,
-                      fontSize: 10,
-                      letterSpacing: 2.2,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(0.85),
-                    ),
+                  Row(
+                    children: [
+                      const AdeyAbeba(size: 9, colour: Color(0xFFF0DCA0)),
+                      const SizedBox(width: 7),
+                      Text(
+                        L.t('home.hero.kicker', lang),
+                        style: TextStyle(
+                          fontFamily: lang.isAmharic
+                              ? NorchaTypeFace.amharic
+                              : NorchaTypeFace.body,
+                          fontSize: lang.isAmharic ? 10.5 : 10,
+                          letterSpacing: lang.isAmharic ? 1.0 : 2.2,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withOpacity(0.88),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Your photos,\nprinted properly.',
+                  AnimatedDefaultTextStyle(
+                    duration: Motion.fast,
                     style: TextStyle(
-                      fontFamily: NorchaTypeFace.display,
-                      fontSize: 27,
-                      height: 1.1,
+                      fontFamily: lang.isAmharic
+                          ? NorchaTypeFace.amharic
+                          : NorchaTypeFace.display,
+                      fontSize: lang.isAmharic ? 22 : 27,
+                      height: 1.15,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
+                    child: Text(L.t('home.hero.line', lang)),
                   ),
                 ],
               ),
@@ -156,27 +172,11 @@ class _Hero extends StatelessWidget {
   }
 }
 
-class _SectionRule extends StatelessWidget {
-  final String label;
-  const _SectionRule({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = NorchaColors.of(context);
-    return Row(
-      children: [
-        Text(label, style: NorchaType.sectionLabel(c)),
-        const SizedBox(width: 10),
-        Expanded(child: Container(height: 1, color: c.line)),
-      ],
-    );
-  }
-}
-
 /// One product family: its photograph, its cheapest price, one tap from a quote.
 class _FamilyCard extends StatelessWidget {
   final String family;
-  const _FamilyCard({required this.family});
+  final NorchaLang lang;
+  const _FamilyCard({required this.family, required this.lang});
 
   static const _images = {
     'prints': 'assets/images/prints.jpg',
@@ -194,8 +194,8 @@ class _FamilyCard extends StatelessWidget {
     final cheapest = p.sizes.map((s) => s.price).reduce((a, b) => a < b ? a : b);
     final accent = Accent.forFamily(family);
     final leadLabel = p.lead == 0
-        ? 'same day'
-        : '${p.lead} day${p.lead == 1 ? '' : 's'}';
+        ? L.t('home.sameDay', lang)
+        : '${p.lead} ${p.lead == 1 ? L.t('home.day', lang) : L.t('home.days', lang)}';
 
     return Pressable(
       onTap: () => AppShell.of(context)?.selectTab(NorchaTab.quote),
@@ -235,10 +235,15 @@ class _FamilyCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(p.label.en,
-                        style: NorchaType.title(c).copyWith(fontSize: 18)),
+                    Text(lang.isAmharic ? p.label.am : p.label.en,
+                        style: NorchaType.title(c).copyWith(
+                          fontFamily: lang.isAmharic
+                              ? NorchaTypeFace.amharic
+                              : NorchaTypeFace.display,
+                          fontSize: lang.isAmharic ? 16 : 18,
+                        )),
                     const SizedBox(height: 5),
-                    Text('${p.sizes.length} sizes · $leadLabel',
+                    Text('${p.sizes.length} ${L.t('home.sizes', lang)} · $leadLabel',
                         style: NorchaType.bodySmall(c)),
                     const SizedBox(height: 8),
                     Text(
@@ -266,7 +271,8 @@ class _FamilyCard extends StatelessWidget {
 
 class _DeadlineBanner extends StatelessWidget {
   final Occasion occasion;
-  const _DeadlineBanner({required this.occasion});
+  final NorchaLang lang;
+  const _DeadlineBanner({required this.occasion, required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -292,14 +298,19 @@ class _DeadlineBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(occasion.name('en'),
-                    style: NorchaType.title(c).copyWith(fontSize: 16)),
+                Text(occasion.name(lang.code),
+                    style: NorchaType.title(c).copyWith(
+                      fontFamily: lang.isAmharic
+                          ? NorchaTypeFace.amharic
+                          : NorchaTypeFace.display,
+                      fontSize: 16,
+                    )),
                 const SizedBox(height: 2),
                 Text(
                   occasion.daysToOrder <= 0
-                      ? 'Last day to order is today'
-                      : 'Order within ${occasion.daysToOrder} day'
-                          '${occasion.daysToOrder == 1 ? '' : 's'}',
+                      ? L.t('home.lastDayToday', lang)
+                      : '${L.t('home.orderWithin', lang)} ${occasion.daysToOrder} '
+                          '${occasion.daysToOrder == 1 ? L.t('home.day', lang) : L.t('home.days', lang)}',
                   style: NorchaType.bodySmall(c).copyWith(color: colour),
                 ),
               ],

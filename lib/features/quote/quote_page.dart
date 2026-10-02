@@ -19,18 +19,23 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/delivery.dart';
 import '../../core/holidays.dart';
+import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/ethiopian.dart';
 import '../../widgets/kinetic_number.dart';
 import '../../widgets/page_scaffold.dart';
+import '../../widgets/size_selector.dart';
 import '../shell/app_shell.dart';
 import '../../theme/ghost_numerals.dart';
 
 class QuotePage extends StatefulWidget {
   final ThemeController themes;
-  const QuotePage({super.key, required this.themes});
+  final LangController langs;
+  const QuotePage({super.key, required this.themes, required this.langs});
 
   @override
   State<QuotePage> createState() => _QuotePageState();
@@ -110,21 +115,20 @@ class _QuotePageState extends State<QuotePage> {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     final q = _quote;
     final a = NorchaDelivery.assess(DateTime.now(), _wantedBy, _product.lead);
     final occasion = NorchaHolidays.current(DateTime.now());
-    final accent = Accent.forFamily(_family);
     final leadLabel = _product.lead == 0
-        ? 'same day'
-        : '${_product.lead} day${_product.lead == 1 ? '' : 's'}';
+        ? L.t('home.sameDay', lang)
+        : '${_product.lead} ${_product.lead == 1 ? L.t('home.day', lang) : L.t('home.days', lang)}';
 
     return PageScaffold(
       chapter: 2,
-      eyebrow: 'Build a job',
-      title: 'What are we\nprinting?',
-      amharic: 'ምን እናተም?',
+      eyebrowKey: 'quote.eyebrow',
+      titleKey: 'quote.title',
       ghostStyle: GhostStyle.outline,
-      trailing: ThemeButton(themes: widget.themes),
+      trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       bottomBar: _TotalBar(
         total: q.total,
         assessment: a,
@@ -140,7 +144,10 @@ class _QuotePageState extends State<QuotePage> {
             children: [
               for (final f in NorchaData.products.keys)
                 _Chip(
-                  label: NorchaData.products[f]!.label.en,
+                  label: lang.isAmharic
+                      ? NorchaData.products[f]!.label.am
+                      : NorchaData.products[f]!.label.en,
+                  amharic: lang.isAmharic,
                   colour: Accent.forFamily(f).colour,
                   selected: _family == f,
                   onTap: () => setState(() {
@@ -154,34 +161,29 @@ class _QuotePageState extends State<QuotePage> {
         ),
 
         const SizedBox(height: 26),
-        _Label(text: 'SIZE', trailing: leadLabel),
-        const SizedBox(height: 12),
+        EthiopianSectionHeader(
+          label: L.t('quote.size', lang),
+          trailing: leadLabel,
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        ),
+        // The proportional shape grid, restored from the original build. The
+        // customer picks the shape they can picture, not a string they have to
+        // convert into a size in their head.
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 1.8,
-            ),
-            itemCount: _product.sizes.length,
-            itemBuilder: (_, i) {
-              final s = _product.sizes[i];
-              return _SizeTile(
-                size: s,
-                accent: accent,
-                selected: _sizeKey == s.key,
-                onTap: () => setState(() => _sizeKey = s.key),
-              );
-            },
+          child: SizeSelector(
+            product: _product,
+            selected: _sizeKey,
+            lang: lang,
+            onSelect: (k) => setState(() => _sizeKey = k),
           ),
         ),
 
         const SizedBox(height: 26),
-        const _Label(text: 'HOW MANY'),
+        EthiopianSectionHeader(
+          label: L.t('quote.howMany', lang),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -203,7 +205,10 @@ class _QuotePageState extends State<QuotePage> {
           ),
 
         const SizedBox(height: 26),
-        const _Label(text: 'WHEN DO YOU NEED IT?'),
+        EthiopianSectionHeader(
+          label: L.t('quote.when', lang),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -230,18 +235,23 @@ class _QuotePageState extends State<QuotePage> {
           ),
 
         const SizedBox(height: 26),
-        const _Label(text: 'THE BREAKDOWN'),
+        EthiopianSectionHeader(
+          label: L.t('quote.breakdown', lang),
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+        ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: ClothSurface(
+          // The breakdown is the one card that should feel like a printed
+          // document, so it gets the woven frame rather than a plain edge.
+          child: TibebFrame(
             child: Column(
               children: [
-                _Line('Unit price', NorchaData.money(q.unit)),
-                _Line('Quantity', '${q.qty}'),
-                _Line('Subtotal', NorchaData.money(q.gross)),
+                _Line(L.t('quote.unit', lang), NorchaData.money(q.unit)),
+                _Line(L.t('quote.qty', lang), '${q.qty}'),
+                _Line(L.t('quote.subtotal', lang), NorchaData.money(q.gross)),
                 if (q.discount > 0)
-                  _Line('Discount (${q.pct}%)',
+                  _Line('${L.t('quote.discount', lang)} (${q.pct}%)',
                       '− ${NorchaData.money(q.discount)}', highlight: true),
               ],
             ),
@@ -258,33 +268,9 @@ class _QuotePageState extends State<QuotePage> {
   }
 }
 
-class _Label extends StatelessWidget {
-  final String text;
-  final String? trailing;
-  const _Label({required this.text, this.trailing});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = NorchaColors.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Text(text, style: NorchaType.sectionLabel(c)),
-          const SizedBox(width: 10),
-          Expanded(child: Container(height: 1, color: c.line)),
-          if (trailing != null) ...[
-            const SizedBox(width: 10),
-            Text(trailing!, style: NorchaType.bodySmall(c).copyWith(fontSize: 11.5)),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 class _Chip extends StatelessWidget {
   final String label;
+  final bool amharic;
   final Color colour;
   final bool selected;
   final VoidCallback onTap;
@@ -294,6 +280,7 @@ class _Chip extends StatelessWidget {
     required this.colour,
     required this.selected,
     required this.onTap,
+    this.amharic = false,
   });
 
   @override
@@ -316,7 +303,8 @@ class _Chip extends StatelessWidget {
         child: Text(
           label,
           style: NorchaType.bodySmall(c).copyWith(
-            fontSize: 13,
+            fontFamily: amharic ? NorchaTypeFace.amharic : NorchaTypeFace.body,
+            fontSize: amharic ? 12.5 : 13,
             color: selected ? colour : c.inkSoft,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
@@ -629,7 +617,13 @@ class _TotalBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('TOTAL', style: NorchaType.sectionLabel(c)),
+                    Text(L.t('quote.total', lang),
+                        style: NorchaType.sectionLabel(c).copyWith(
+                          fontFamily: lang.isAmharic
+                              ? NorchaTypeFace.amharic
+                              : NorchaTypeFace.body,
+                          letterSpacing: lang.isAmharic ? 1.2 : 2.4,
+                        )),
                     const SizedBox(height: 2),
                     KineticNumber(
                       value: NorchaData.money(total),
@@ -658,7 +652,7 @@ class _TotalBar extends StatelessWidget {
                           size: 17, color: Brand.onAction(c)),
                       const SizedBox(width: 9),
                       Text(
-                        'Send',
+                        L.t('quote.send', lang),
                         style: NorchaType.body(c).copyWith(
                           color: Brand.onAction(c),
                           fontSize: 15,

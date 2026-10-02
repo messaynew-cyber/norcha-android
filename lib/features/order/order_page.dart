@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
 import '../../theme/app_theme.dart';
@@ -23,10 +24,12 @@ import '../../widgets/cloth_surface.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 import '../../theme/ghost_numerals.dart';
+import '../../widgets/ethiopian.dart';
 
 class OrderPage extends StatefulWidget {
   final ThemeController themes;
-  const OrderPage({super.key, required this.themes});
+  final LangController langs;
+  const OrderPage({super.key, required this.themes, required this.langs});
 
   @override
   State<OrderPage> createState() => _OrderPageState();
@@ -64,15 +67,15 @@ class _OrderPageState extends State<OrderPage> {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
 
     return PageScaffold(
       chapter: 3,
-      eyebrow: 'Order status',
-      title: 'Did my photos\narrive?',
-      amharic: 'ፎቶዎቼ ደርሰዋል?',
+      eyebrowKey: 'order.eyebrow',
+      titleKey: 'order.title',
       ghostStyle: GhostStyle.outline,
       ghostLeft: true,
-      trailing: ThemeButton(themes: widget.themes),
+      trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -80,14 +83,18 @@ class _OrderPageState extends State<OrderPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Enter the reference we gave you and the phone number you '
-                'ordered with.',
-                style: NorchaType.bodySmall(c).copyWith(fontSize: 14),
+                L.t('order.blurb', lang),
+                style: NorchaType.bodySmall(c).copyWith(
+                  fontFamily: lang.isAmharic
+                      ? NorchaTypeFace.amharic
+                      : NorchaTypeFace.body,
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 20),
               _Field(
                 controller: _code,
-                label: 'REFERENCE',
+                label: L.t('order.ref', lang),
                 hint: 'NOR-ABC123',
                 caps: TextCapitalization.characters,
                 formatters: [
@@ -100,7 +107,7 @@ class _OrderPageState extends State<OrderPage> {
               const SizedBox(height: 14),
               _Field(
                 controller: _phone,
-                label: 'PHONE NUMBER',
+                label: L.t('order.phone', lang),
                 hint: '09•• ••• •••',
                 keyboard: TextInputType.phone,
                 formatters: [
@@ -109,7 +116,9 @@ class _OrderPageState extends State<OrderPage> {
               ),
               const SizedBox(height: 22),
               _PrimaryButton(
-                label: _busy ? 'Checking…' : 'Check my order',
+                label: _busy
+                    ? L.t('order.checking', lang)
+                    : L.t('order.check', lang),
                 busy: _busy,
                 onTap: _busy ? null : _check,
               ),
@@ -262,7 +271,7 @@ class _ResultBlock extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('We have your photos',
+                    child: Text(L.t('order.found', lang),
                         style: NorchaType.title(c).copyWith(fontSize: 18)),
                   ),
                 ],
@@ -279,12 +288,12 @@ class _ResultBlock extends StatelessWidget {
               const SizedBox(height: 16),
               Divider(color: c.line, height: 1),
               const SizedBox(height: 14),
-              _Row('Photos received', '${r.files}'),
-              if (r.received != null) _Row('Received', _fmt(r.received!)),
+              _Row(L.t('order.received', lang), '${r.files}'),
+              if (r.received != null) _Row(L.t('order.arrived', lang), _fmt(r.received!)),
               if (r.requestedSummary != '—')
-                _Row('You asked for', r.requestedSummary),
+                _Row(L.t('order.asked', lang), r.requestedSummary),
               if (r.deleteAfter != null)
-                _Row('We delete them on', _fmt(r.deleteAfter!)),
+                _Row(L.t('order.deleted', lang), _fmt(r.deleteAfter!)),
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(13),
@@ -305,7 +314,7 @@ class _ResultBlock extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         _PrimaryButton(
-          label: 'Message us on WhatsApp',
+          label: L.t('order.whatsapp', lang),
           // Built outside the widget tree: a multi-line interpolation with a
           // nested call is hard to read and easy to mis-parse. One variable
           // costs nothing and makes the intent obvious.
@@ -318,7 +327,7 @@ class _ResultBlock extends StatelessWidget {
         Center(
           child: TextButton(
             onPressed: onCheckAnother,
-            child: Text('Check another reference',
+            child: Text(L.t('order.another', lang),
                 style: NorchaType.bodySmall(c)
                     .copyWith(decoration: TextDecoration.underline)),
           ),

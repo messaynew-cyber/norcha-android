@@ -14,17 +14,20 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/delivery.dart';
 import '../../core/holidays.dart';
+import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/ethiopian.dart';
 import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
 class AboutPage extends StatelessWidget {
   final ThemeController themes;
-  const AboutPage({super.key, required this.themes});
+  final LangController langs;
+  const AboutPage({super.key, required this.themes, required this.langs});
 
   @override
   Widget build(BuildContext context) {
@@ -34,11 +37,11 @@ class AboutPage extends StatelessWidget {
 
     return PageScaffold(
       chapter: 5,
-      eyebrow: 'The studio',
-      title: 'Norcha Print,\nBole.',
-      amharic: 'ኖርቻ ፕሪንት · ቦሌ',
+      eyebrowKey: 'studio.eyebrow',
+      titleKey: 'studio.title',
       ghostStyle: GhostStyle.outline,
-      trailing: ThemeButton(themes: themes),
+      telafi: true,
+      trailing: HeaderControls(themes: themes, langs: langs),
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 24),
@@ -108,13 +111,14 @@ class _OpenCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     return ClothSurface(
       accent: Brand.action(c),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('FIND US', style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.findUs', lang), style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           _Line(icon: Icons.place_outlined, text: Shop.city),
           const SizedBox(height: 4),
@@ -122,11 +126,11 @@ class _OpenCard extends StatelessWidget {
           const SizedBox(height: 4),
           _Line(
             icon: Icons.timer_outlined,
-            text: 'Same-day cut-off ${Shop.cutoffHour}:00',
+            text: '${L.t('studio.cutoff', lang)} ${Shop.cutoffHour}:00',
           ),
           const SizedBox(height: 16),
           _Action(
-            label: 'Open in Maps',
+            label: L.t('studio.maps', lang),
             icon: Icons.map_outlined,
             onTap: () => launchUrl(
               Uri.parse('https://www.google.com/maps/search/?api=1&query='
@@ -146,12 +150,13 @@ class _ReachCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     return ClothSurface(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('TALK TO A PERSON', style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.talk', lang), style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           SelectableText(Shop.phone,
               style: NorchaType.title(c).copyWith(fontSize: 21)),
@@ -160,7 +165,7 @@ class _ReachCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _Action(
-                  label: 'WhatsApp',
+                  label: L.t('studio.whatsapp', lang),
                   icon: Icons.chat_outlined,
                   filled: true,
                   onTap: () => launchUrl(Uri.parse('https://wa.me/${Shop.wa}'),
@@ -170,7 +175,7 @@ class _ReachCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _Action(
-                  label: 'Call',
+                  label: L.t('studio.call', lang),
                   icon: Icons.call_outlined,
                   filled: false,
                   onTap: () => launchUrl(Uri.parse('tel:${Shop.wa}'),
@@ -196,19 +201,19 @@ class _TimingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     return ClothSurface(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('HOW LONG IT TAKES', style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.howLong', lang), style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           Text(NorchaDelivery.readyPhrase(ready, 'en'),
               style: NorchaType.title(c).copyWith(fontSize: 20)),
           const SizedBox(height: 8),
           Text(
-            'A photo book takes two production days; prints and canvas take '
-            'less. Sundays the shop is shut, so they are not counted.',
+            L.t('studio.timingNote', lang),
             style: NorchaType.bodySmall(c).copyWith(fontSize: 13),
           ),
           if (occasion != null) ...[
@@ -234,6 +239,7 @@ class _PhotoPrivacyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
     return ClothSurface(
       accent: Brand.gold,
       padding: const EdgeInsets.all(20),
@@ -244,20 +250,17 @@ class _PhotoPrivacyCard extends StatelessWidget {
             children: [
               const Icon(Icons.lock_outline_rounded, size: 17, color: Brand.gold),
               const SizedBox(width: 9),
-              Text('YOUR PHOTOS', style: NorchaType.sectionLabel(c)),
+              Text(L.t('studio.yourPhotos', lang), style: NorchaType.sectionLabel(c)),
             ],
           ),
           const SizedBox(height: 12),
           Text(
-            'We keep your photos for 30 days so we can print them, then we '
-            'delete them. We do not publish them, and we do not sell them.',
+            L.t('studio.retention', lang),
             style: NorchaType.bodySmall(c).copyWith(fontSize: 13.5, color: c.ink),
           ),
           const SizedBox(height: 12),
           Text(
-            'Order lookup needs both your reference AND the phone number you '
-            'ordered with. One without the other gets no answer — so nobody can '
-            'use it to check whether an order exists.',
+            L.t('studio.privacy', lang),
             style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
           ),
         ],

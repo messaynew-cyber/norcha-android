@@ -15,8 +15,10 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/lang.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
+import '../../widgets/lang_toggle.dart';
 import '../../widgets/theme_toggle.dart';
 
 /// Tab indices, named so no screen has to remember a magic number.
@@ -32,12 +34,14 @@ class AppShell extends StatefulWidget {
   final int initialIndex;
   final List<Widget> pages;
   final ThemeController themes;
+  final LangController langs;
 
   const AppShell({
     super.key,
     this.initialIndex = 0,
     required this.pages,
     required this.themes,
+    required this.langs,
   });
 
   /// Switch tabs from anywhere inside the shell without threading a callback
@@ -53,6 +57,7 @@ class AppShell extends StatefulWidget {
 abstract class NorchaShellController {
   void selectTab(int index);
   ThemeController get themes;
+  LangController get langs;
 }
 
 class NorchaShellScope extends InheritedWidget {
@@ -74,18 +79,22 @@ class _AppShellState extends State<AppShell> implements NorchaShellController {
   ThemeController get themes => widget.themes;
 
   @override
+  LangController get langs => widget.langs;
+
+  @override
   void selectTab(int index) {
     if (index < 0 || index >= _tabs.length || index == _index) return;
     setState(() => _index = index);
   }
 
   static const _tabs = <_TabSpec>[
-    _TabSpec('Home', '\u1369', Icons.home_outlined, Icons.home_rounded),
-    _TabSpec('Quote', '\u136A', Icons.calculate_outlined, Icons.calculate_rounded),
-    _TabSpec('Order', '\u136B', Icons.search_outlined, Icons.search_rounded),
-    _TabSpec('Upload', '\u136C', Icons.add_photo_alternate_outlined,
+    _TabSpec('nav.home', '\u1369', Icons.home_outlined, Icons.home_rounded),
+    _TabSpec('nav.quote', '\u136A', Icons.calculate_outlined,
+        Icons.calculate_rounded),
+    _TabSpec('nav.order', '\u136B', Icons.search_outlined, Icons.search_rounded),
+    _TabSpec('nav.upload', '\u136C', Icons.add_photo_alternate_outlined,
         Icons.add_photo_alternate_rounded),
-    _TabSpec('Studio', '\u136D', Icons.storefront_outlined,
+    _TabSpec('nav.studio', '\u136D', Icons.storefront_outlined,
         Icons.storefront_rounded),
   ];
 
@@ -113,13 +122,14 @@ class _AppShellState extends State<AppShell> implements NorchaShellController {
         index: _index,
         tabs: _tabs,
         onSelect: selectTab,
+        lang: widget.langs.lang,
       ),
     );
   }
 }
 
 class _TabSpec {
-  final String label;
+  final String label;   // a LangController key
   final String numeral; // the Ge'ez chapter mark
   final IconData icon;
   final IconData activeIcon;
@@ -136,11 +146,13 @@ class _ClothNavBar extends StatelessWidget {
   final int index;
   final List<_TabSpec> tabs;
   final ValueChanged<int> onSelect;
+  final NorchaLang lang;
 
   const _ClothNavBar({
     required this.index,
     required this.tabs,
     required this.onSelect,
+    required this.lang,
   });
 
   @override
@@ -163,6 +175,7 @@ class _ClothNavBar extends StatelessWidget {
                   child: _NavItem(
                     spec: tabs[i],
                     selected: i == index,
+                    lang: lang,
                     onTap: () => onSelect(i),
                   ),
                 ),
@@ -177,11 +190,13 @@ class _ClothNavBar extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   final _TabSpec spec;
   final bool selected;
+  final NorchaLang lang;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.spec,
     required this.selected,
+    required this.lang,
     required this.onTap,
   });
 
@@ -237,11 +252,17 @@ class _NavItem extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 2),
+          // The nav label follows the app language. At 10.5px the Amharic is
+          // set in the Ethiopic face so it does not fall back to a Latin font
+          // and render as boxes.
           Text(
-            spec.label,
+            L.t(spec.label, lang),
             style: NorchaType.bodySmall(c).copyWith(
-              fontSize: 10.5,
-              letterSpacing: 0.3,
+              fontFamily: lang.isAmharic
+                  ? NorchaTypeFace.amharic
+                  : NorchaTypeFace.body,
+              fontSize: lang.isAmharic ? 11 : 10.5,
+              letterSpacing: lang.isAmharic ? 0 : 0.3,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               color: colour,
             ),
@@ -252,7 +273,35 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// The theme switch, for a header's trailing slot.
+/// The header controls: language and appearance, side by side.
+///
+/// One widget so every page's header is identical. Two separate trailing slots
+/// would drift — one page with the language first, another with the theme, and
+/// the controls become something you have to hunt for.
+class HeaderControls extends StatelessWidget {
+  final ThemeController themes;
+  final LangController langs;
+
+  const HeaderControls({
+    super.key,
+    required this.themes,
+    required this.langs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        LangToggle(controller: langs),
+        const SizedBox(width: 8),
+        ThemeToggle(controller: themes),
+      ],
+    );
+  }
+}
+
+/// Kept so existing call sites do not break — a header with only the theme.
 class ThemeButton extends StatelessWidget {
   final ThemeController themes;
   const ThemeButton({super.key, required this.themes});

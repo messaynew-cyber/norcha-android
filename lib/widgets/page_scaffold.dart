@@ -12,15 +12,19 @@
 
 import 'package:flutter/material.dart';
 
+import '../core/lang.dart';
 import '../theme/app_theme.dart';
 import '../theme/ghost_numerals.dart';
+import 'ethiopian.dart';
 
 class PageScaffold extends StatefulWidget {
   final int chapter;              // 1-based — drives the ghost numeral
-  final String eyebrow;
-  final String title;
-  final String? amharic;
+  final String eyebrowKey;        // LangController key
+  final String titleKey;          // LangController key
   final Widget? trailing;
+  /// Optional woven band above the content. Used on Home and Studio — the two
+  /// pages that are about the shop rather than about a transaction.
+  final bool telafi;
 
   /// Content. Wrapped in a staggered reveal internally.
   final List<Widget> children;
@@ -34,14 +38,14 @@ class PageScaffold extends StatefulWidget {
   const PageScaffold({
     super.key,
     required this.chapter,
-    required this.eyebrow,
-    required this.title,
+    required this.eyebrowKey,
+    required this.titleKey,
     required this.children,
-    this.amharic,
     this.trailing,
     this.bottomBar,
     this.ghostStyle = GhostStyle.soft,
     this.ghostLeft = false,
+    this.telafi = false,
   });
 
   @override
@@ -117,13 +121,13 @@ class _PageScaffoldState extends State<PageScaffold> {
                     padding: const EdgeInsets.only(bottom: 28),
                     children: [
                       _Header(
-                        eyebrow: widget.eyebrow,
-                        title: widget.title,
-                        amharic: widget.amharic,
+                        eyebrowKey: widget.eyebrowKey,
+                        titleKey: widget.titleKey,
                         trailing: widget.trailing,
                         size: titleSize,
                         opacity: titleOpacity,
                         collapse: collapse,
+                        telafi: widget.telafi,
                       ),
                       ...widget.children.asMap().entries.map(
                         (e) => StaggeredReveal(
@@ -145,108 +149,90 @@ class _PageScaffoldState extends State<PageScaffold> {
 }
 
 class _Header extends StatelessWidget {
-  final String eyebrow;
-  final String title;
-  final String? amharic;
+  final String eyebrowKey;
+  final String titleKey;
   final Widget? trailing;
   final double size;
   final double opacity;
   final double collapse;
+  final bool telafi;
 
   const _Header({
-    required this.eyebrow,
-    required this.title,
-    this.amharic,
+    required this.eyebrowKey,
+    required this.titleKey,
     this.trailing,
     required this.size,
     required this.opacity,
     required this.collapse,
+    required this.telafi,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    final lang = LangController.of(context).lang;
+
+    // In Amharic the TITLE is Amharic and the subtitle is English; in English
+    // the reverse. The secondary line is never hidden — it is what makes the
+    // app usable by whoever happens to be holding the phone, which at a counter
+    // is often not the person who set it up.
+    final primary = L.t(titleKey, lang);
+    final secondary = L.t(titleKey, lang == NorchaLang.am
+        ? NorchaLang.en
+        : NorchaLang.am);
 
     return Padding(
       padding: EdgeInsets.fromLTRB(24, 18 - (6 * collapse), 24, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // The selvedge — three dyed threads at the very top of the page. On
-          // the website it bands the whole document; here it marks the top of
-          // each page, which is the same device at page scale.
+          // The selvedge: three dyed threads at the very top of the page.
+          // DESIGN.md allows it here and above the footer, nowhere else.
           Opacity(
             opacity: 1 - (0.6 * collapse),
-            child: Container(
-              height: 3,
-              decoration: BoxDecoration(
-                gradient: Brand.selvedge,
-                borderRadius: BorderRadius.circular(1.5),
-              ),
-            ),
+            child: const Selvedge(),
           ),
           const SizedBox(height: 14),
           Row(
             children: [
-              Text(eyebrow.toUpperCase(), style: NorchaType.sectionLabel(c)),
+              Text(L.t(eyebrowKey, lang).toUpperCase(),
+                  style: NorchaType.sectionLabel(c).copyWith(
+                    fontFamily: lang.isAmharic
+                        ? NorchaTypeFace.amharic
+                        : NorchaTypeFace.body,
+                    letterSpacing: lang.isAmharic ? 1.2 : 2.4,
+                  )),
               const Spacer(),
               if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              _TibebRule(colour: c.line),
-            ],
-          ),
+          const TibebRule(),
           const SizedBox(height: 12),
           AnimatedOpacity(
             duration: Motion.fast,
             opacity: opacity,
-            child: Text(
-              title,
-              style: NorchaType.display(c).copyWith(fontSize: size),
+            child: AnimatedDefaultTextStyle(
+              duration: Motion.fast,
+              style: NorchaType.display(c).copyWith(
+                fontFamily: lang.isAmharic
+                    ? NorchaTypeFace.amharic
+                    : NorchaTypeFace.display,
+                fontSize: size,
+              ),
+              child: Text(primary),
             ),
           ),
-          if (amharic != null) ...[
-            const SizedBox(height: 6),
+          if (secondary.isNotEmpty && secondary != primary) ...[
+            const SizedBox(height: 5),
             Text(
-              amharic!,
-              style: NorchaType.amharicText(c).copyWith(
-                fontSize: 16,
-                color: c.inkSoft,
-              ),
+              secondary,
+              style: (lang.isAmharic
+                      ? NorchaType.bodySmall(c)
+                      : NorchaType.amharicText(c))
+                  .copyWith(fontSize: 15, color: c.inkSoft),
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// The tibeb: a hairline with a gold tick at one end. The recurring ornament —
-/// it marks the top of a section without shouting.
-class _TibebRule extends StatelessWidget {
-  final Color colour;
-  const _TibebRule({required this.colour});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 46,
-      height: 2,
-      child: Row(
-        children: [
-          Expanded(child: Container(height: 1, color: colour)),
-          const SizedBox(width: 4),
-          Container(
-            width: 7,
-            height: 2,
-            decoration: BoxDecoration(
-              color: Brand.gold,
-              borderRadius: BorderRadius.circular(1),
-            ),
-          ),
         ],
       ),
     );
