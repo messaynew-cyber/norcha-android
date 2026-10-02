@@ -1,23 +1,23 @@
 // Norcha Print — the shell.
 //
-// FIVE PAGES, and this is the widget that makes them a product rather than a
-// demo:
+// FIVE PAGES behind one nav bar:
 //
-//   Home    — the studio, prices at a glance, the next deadline
-//   Quote   — build a job and get a number
-//   Order   — "did my photos arrive?" (the live API)
-//   Upload  — send photos (the live API)
-//   Studio  — where the shop is, hours, how to reach a human
+//   Home   ፩  the studio, prices at a glance, the next deadline
+//   Quote  ፪  build a job and get a number
+//   Order  ፫  "did my photos arrive?" (live API)
+//   Upload ፬  send photos (live API)
+//   Studio ፭  where the shop is, hours, how to reach a human
 //
-// WHY A SHELL WITH AN INDEX RATHER THAN ROUTES ALONE
-// Bottom-tab navigation must preserve each tab's state — coming back to a
-// half-built quote and finding it reset is the single most infuriating thing a
-// small app can do. IndexedStack keeps all five alive.
+// WHY IndexedStack
+// Each tab keeps its state. Coming back to a half-built quote and finding it
+// reset is the single most infuriating thing a small app can do, and the fix is
+// one widget deep.
 
 import 'package:flutter/material.dart';
 
-import '../../theme/netela.dart';
-import '../../theme/norcha_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/theme_controller.dart';
+import '../../widgets/theme_toggle.dart';
 
 /// Tab indices, named so no screen has to remember a magic number.
 class NorchaTab {
@@ -31,10 +31,16 @@ class NorchaTab {
 class AppShell extends StatefulWidget {
   final int initialIndex;
   final List<Widget> pages;
+  final ThemeController themes;
 
-  const AppShell({super.key, this.initialIndex = 0, required this.pages});
+  const AppShell({
+    super.key,
+    this.initialIndex = 0,
+    required this.pages,
+    required this.themes,
+  });
 
-  /// Switch tabs from anywhere inside the shell, without threading a callback
+  /// Switch tabs from anywhere inside the shell without threading a callback
   /// through every constructor on the way down. Returns null outside a shell
   /// (a page rendered standalone in a test), which callers must tolerate.
   static NorchaShellController? of(BuildContext context) =>
@@ -44,9 +50,9 @@ class AppShell extends StatefulWidget {
   State<AppShell> createState() => _AppShellState();
 }
 
-/// The handle a page uses to move between tabs.
 abstract class NorchaShellController {
   void selectTab(int index);
+  ThemeController get themes;
 }
 
 class NorchaShellScope extends InheritedWidget {
@@ -65,37 +71,48 @@ class _AppShellState extends State<AppShell> implements NorchaShellController {
   late int _index = widget.initialIndex;
 
   @override
+  ThemeController get themes => widget.themes;
+
+  @override
   void selectTab(int index) {
     if (index < 0 || index >= _tabs.length || index == _index) return;
     setState(() => _index = index);
   }
 
   static const _tabs = <_TabSpec>[
-    _TabSpec('Home', Icons.home_outlined, Icons.home_rounded),
-    _TabSpec('Quote', Icons.calculate_outlined, Icons.calculate_rounded),
-    _TabSpec('Order', Icons.search_outlined, Icons.search_rounded),
-    _TabSpec('Upload', Icons.add_photo_alternate_outlined,
+    _TabSpec('Home', '\u1369', Icons.home_outlined, Icons.home_rounded),
+    _TabSpec('Quote', '\u136A', Icons.calculate_outlined, Icons.calculate_rounded),
+    _TabSpec('Order', '\u136B', Icons.search_outlined, Icons.search_rounded),
+    _TabSpec('Upload', '\u136C', Icons.add_photo_alternate_outlined,
         Icons.add_photo_alternate_rounded),
-    _TabSpec('Studio', Icons.storefront_outlined, Icons.storefront_rounded),
+    _TabSpec('Studio', '\u136D', Icons.storefront_outlined,
+        Icons.storefront_rounded),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+
+    // Exit intent: a slow cross-fade of the whole body when the theme switches,
+    // so the flip reads as the light changing rather than the app being redrawn.
     return Scaffold(
-      backgroundColor: NorchaPalette.paper,
-      // IndexedStack: every tab stays alive, so a half-built quote survives a
-      // trip to the Order tab. This is the whole reason for a shell.
+      backgroundColor: c.ground,
       body: NorchaShellScope(
         controller: this,
-        child: IndexedStack(index: _index, children: widget.pages),
+        child: AnimatedSwitcher(
+          duration: Motion.medium,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          child: KeyedSubtree(
+            key: ValueKey(widget.themes.mode),
+            child: IndexedStack(index: _index, children: widget.pages),
+          ),
+        ),
       ),
       bottomNavigationBar: _ClothNavBar(
         index: _index,
         tabs: _tabs,
-        onSelect: (i) {
-          if (i == _index) return;
-          setState(() => _index = i);
-        },
+        onSelect: selectTab,
       ),
     );
   }
@@ -103,17 +120,18 @@ class _AppShellState extends State<AppShell> implements NorchaShellController {
 
 class _TabSpec {
   final String label;
+  final String numeral; // the Ge'ez chapter mark
   final IconData icon;
   final IconData activeIcon;
-  const _TabSpec(this.label, this.icon, this.activeIcon);
+  const _TabSpec(this.label, this.numeral, this.icon, this.activeIcon);
 }
 
 /// The bottom bar, built rather than borrowed.
 ///
-/// Material's NavigationBar would put a pill indicator behind the selected tab.
-/// That pill is exactly the kind of generic Material chrome this app is trying
-/// not to have. Instead the selected tab gets a gold tibeb tick above it:
-/// quieter, and it belongs to this brand rather than to the framework.
+/// Material's NavigationBar puts a pill indicator behind the selected tab —
+/// exactly the generic chrome this app is trying not to have. Here the selected
+/// tab gets a gold tibeb tick AND its Ge'ez numeral, so the navigation carries
+/// the same chapter system as the pages themselves.
 class _ClothNavBar extends StatelessWidget {
   final int index;
   final List<_TabSpec> tabs;
@@ -127,15 +145,17 @@ class _ClothNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: NorchaPalette.card,
-        border: Border(top: BorderSide(color: NorchaPalette.line, width: 1)),
+      decoration: BoxDecoration(
+        color: c.card,
+        border: Border(top: BorderSide(color: c.line, width: 1)),
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
-          height: 62,
+          height: 64,
           child: Row(
             children: [
               for (var i = 0; i < tabs.length; i++)
@@ -167,32 +187,59 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colour = selected ? NorchaPalette.pine : NorchaPalette.inkFaint;
+    final c = NorchaColors.of(context);
+    final colour = selected ? Brand.action(c) : c.inkFaint;
 
     return InkWell(
       onTap: onTap,
-      splashColor: NorchaPalette.pine.withOpacity(0.06),
+      splashColor: Brand.action(c).withOpacity(0.06),
       highlightColor: Colors.transparent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // The tibeb tick — the selection marker, the only gold in the bar.
           AnimatedContainer(
-            duration: NorchaMotion.fast,
+            duration: Motion.fast,
             curve: Curves.easeOut,
-            width: selected ? 16 : 0,
+            width: selected ? 18 : 0,
             height: 2,
-            margin: const EdgeInsets.only(bottom: 6),
+            margin: const EdgeInsets.only(bottom: 5),
             decoration: BoxDecoration(
-              color: NorchaPalette.gold,
+              color: Brand.gold,
               borderRadius: BorderRadius.circular(1),
             ),
           ),
-          Icon(selected ? spec.activeIcon : spec.icon, size: 22, color: colour),
-          const SizedBox(height: 3),
+          // The numeral sits behind the icon as a tiny chapter mark. It is what
+          // makes the nav feel like part of this app rather than part of
+          // Material.
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              if (selected)
+                Text(
+                  spec.numeral,
+                  style: TextStyle(
+                    fontFamily: NorchaTypeFace.amharic,
+                    fontSize: 30,
+                    height: 1.0,
+                    color: Brand.gold.withOpacity(0.16),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              AnimatedScale(
+                duration: Motion.fast,
+                scale: selected ? 1.06 : 1.0,
+                child: Icon(
+                  selected ? spec.activeIcon : spec.icon,
+                  size: 21,
+                  color: colour,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
           Text(
             spec.label,
-            style: NorchaType.bodySmall.copyWith(
+            style: NorchaType.bodySmall(c).copyWith(
               fontSize: 10.5,
               letterSpacing: 0.3,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
@@ -205,52 +252,11 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// The shared page header. All five pages use this, so the app has one header
-/// geometry instead of five slightly different ones.
-class NorchaHeader extends StatelessWidget {
-  final String eyebrow;
-  final String title;
-  final String? amharic;
-  final Widget? trailing;
-
-  const NorchaHeader({
-    super.key,
-    required this.eyebrow,
-    required this.title,
-    this.amharic,
-    this.trailing,
-  });
+/// The theme switch, for a header's trailing slot.
+class ThemeButton extends StatelessWidget {
+  final ThemeController themes;
+  const ThemeButton({super.key, required this.themes});
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(eyebrow.toUpperCase(), style: NorchaType.sectionLabel),
-              const Spacer(),
-              if (trailing != null) trailing!,
-            ],
-          ),
-          const SizedBox(height: 10),
-          Cloth.tibeb(),
-          const SizedBox(height: 14),
-          Text(title, style: NorchaType.display),
-          if (amharic != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              amharic!,
-              style: NorchaType.amharic.copyWith(
-                fontSize: 16,
-                color: NorchaPalette.inkSoft,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ThemeToggle(controller: themes);
 }

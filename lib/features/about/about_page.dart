@@ -73,24 +73,24 @@ class AboutPage extends StatelessWidget {
                   height: 52,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: NorchaPalette.card,
+                    color: c.card,
                     shape: BoxShape.circle,
-                    border: Border.all(color: NorchaPalette.gold, width: 1),
+                    border: Border.all(color: Brand.gold, width: 1),
                   ),
                   child: Text(
                     'ኖ',
                     style: TextStyle(
-                      fontFamily: NorchaType.amharicFamily,
+                      fontFamily: NorchaType.amharicText(c)Family,
                       fontSize: 24,
                       height: 1.1,
-                      color: NorchaPalette.pine,
+                      color: Brand.action(c),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Text('${Shop.name} · v0.2',
-                    style: NorchaType.bodySmall.copyWith(fontSize: 12)),
+                    style: NorchaType.body(c)Small(c).copyWith(fontSize: 12)),
               ],
             ),
           ),
@@ -107,12 +107,12 @@ class _OpenCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClothSurface(
-      accent: NorchaPalette.pine,
+      accent: Brand.action(c),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('FIND US', style: NorchaType.sectionLabel),
+          const Text('FIND US', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           _Line(icon: Icons.place_outlined, text: Shop.city),
           const SizedBox(height: 4),
@@ -148,11 +148,11 @@ class _ReachCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('TALK TO A PERSON', style: NorchaType.sectionLabel),
+          const Text('TALK TO A PERSON', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           SelectableText(
             Shop.phone,
-            style: NorchaType.title.copyWith(fontSize: 21),
+            style: NorchaType.title(c).copyWith(fontSize: 21),
           ),
           const SizedBox(height: 14),
           Row(
@@ -203,26 +203,26 @@ class _TimingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('HOW LONG IT TAKES', style: NorchaType.sectionLabel),
+          const Text('HOW LONG IT TAKES', style: NorchaType.sectionLabel(c)),
           const SizedBox(height: 12),
           Text(
             NorchaDelivery.readyPhrase(ready, 'en'),
-            style: NorchaType.title.copyWith(fontSize: 20),
+            style: NorchaType.title(c).copyWith(fontSize: 20),
           ),
           const SizedBox(height: 8),
           Text(
             'A photo book takes two production days; prints and canvas take '
             'less. Sundays the shop is shut, so they are not counted.',
-            style: NorchaType.bodySmall.copyWith(fontSize: 13),
+            style: NorchaType.body(c)Small(c).copyWith(fontSize: 13),
           ),
           if (occasion != null) ...[
             const SizedBox(height: 16),
-            const Divider(color: NorchaPalette.line, height: 1),
+            const Divider(color: c.line, height: 1),
             const SizedBox(height: 14),
             Text(
               '${occasion!.name('en')} is in ${occasion!.days} days. '
               'Last day to order is ${NorchaDelivery.fmt(occasion!.orderBy, 'en')}.',
-              style: NorchaType.bodySmall.copyWith(fontSize: 13),
+              style: NorchaType.body(c)Small(c).copyWith(fontSize: 13),
             ),
           ],
         ],
@@ -238,7 +238,7 @@ class _PhotoPrivacyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClothSurface(
-      accent: NorchaPalette.gold,
+      accent: Brand.gold,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,24 +246,24 @@ class _PhotoPrivacyCard extends StatelessWidget {
           const Row(
             children: [
               Icon(Icons.lock_outline_rounded,
-                  size: 17, color: NorchaPalette.gold),
+                  size: 17, color: Brand.gold),
               SizedBox(width: 9),
-              Text('YOUR PHOTOS', style: NorchaType.sectionLabel),
+              Text('YOUR PHOTOS', style: NorchaType.sectionLabel(c)),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             'We keep your photos for 30 days so we can print them, then we '
             'delete them. We do not publish them, and we do not sell them.',
-            style: NorchaType.bodySmall.copyWith(
-                fontSize: 13.5, color: NorchaPalette.ink),
+            style: NorchaType.body(c)Small(c).copyWith(
+                fontSize: 13.5, color: c.ink),
           ),
           const SizedBox(height: 12),
           Text(
             'Order lookup needs both your reference AND the phone number you '
             'ordered with. One without the other gets no answer — so nobody can '
             'use it to check whether an order exists.',
-            style: NorchaType.bodySmall.copyWith(fontSize: 12.5),
+            style: NorchaType.body(c)Small(c).copyWith(fontSize: 12.5),
           ),
         ],
       ),
@@ -281,12 +281,12 @@ class _Line extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: NorchaPalette.inkFaint),
+        Icon(icon, size: 16, color: c.inkFaint),
         const SizedBox(width: 10),
         Expanded(
           child: Text(text,
-              style: NorchaType.bodySmall.copyWith(
-                  fontSize: 14, color: NorchaPalette.ink)),
+              style: NorchaType.body(c)Small(c).copyWith(
+                  fontSize: 14, color: c.ink)),
         ),
       ],
     );
@@ -308,22 +308,22 @@ class _Action extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = filled ? NorchaPalette.card : NorchaPalette.pine;
+    final fg = filled ? c.card : Brand.action(c);
 
     return Material(
-      color: filled ? NorchaPalette.pine : Colors.transparent,
-      borderRadius: BorderRadius.circular(NorchaShape.sm),
+      color: filled ? Brand.action(c) : Colors.transparent,
+      borderRadius: BorderRadius.circular(Radius.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(NorchaShape.sm),
+        borderRadius: BorderRadius.circular(Radius.sm),
         child: Container(
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(NorchaShape.sm),
+            borderRadius: BorderRadius.circular(Radius.sm),
             border: filled
                 ? null
-                : Border.all(color: NorchaPalette.pine.withOpacity(0.35)),
+                : Border.all(color: Brand.action(c).withOpacity(0.35)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -331,7 +331,7 @@ class _Action extends StatelessWidget {
               Icon(icon, size: 16, color: fg),
               const SizedBox(width: 7),
               Text(label,
-                  style: NorchaType.bodySmall.copyWith(
+                  style: NorchaType.body(c)Small(c).copyWith(
                       color: fg,
                       fontWeight: FontWeight.w600,
                       fontSize: 13.5)),

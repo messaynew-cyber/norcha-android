@@ -2,15 +2,14 @@
 //
 // THE HONEST VERSION
 // This does not pretend the shop has a live status feed. It answers one real
-// question — what did you receive, and when — from the same records the
-// uploader wrote. A person at the studio still confirms sizes and price.
+// question — what did you receive, and when — from the records the uploader
+// wrote. A person at the studio still confirms sizes and price.
 //
 // 🔴 THE PRIVACY RULE, CARRIED INTO THE UI
-// The endpoint deliberately returns ONE indistinguishable answer for unknown
-// code, wrong phone and unreadable record, so it can never confirm to a
-// stranger whether an order exists. This screen must not undo that by
-// guessing which field was wrong. There is one error message for a 404, and
-// it names both fields, not the guilty one.
+// The endpoint returns ONE indistinguishable answer for unknown code, wrong
+// phone and unreadable record, so it can never confirm to a stranger whether an
+// order exists. This screen must not undo that by guessing which field was
+// wrong. One error message for a 404, naming both fields, never the guilty one.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,12 +17,15 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
-import '../../theme/norcha_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
+import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
 class OrderPage extends StatefulWidget {
-  const OrderPage({super.key});
+  final ThemeController themes;
+  const OrderPage({super.key, required this.themes});
 
   @override
   State<OrderPage> createState() => _OrderPageState();
@@ -49,74 +51,99 @@ class _OrderPageState extends State<OrderPage> {
       _busy = true;
       _result = null;
     });
-
     final r = await NorchaApi.lookupOrder(_code.text, _phone.text);
     if (!mounted) return;
     setState(() {
       _busy = false;
       _result = r;
     });
+    if (r.ok) HapticFeedback.lightImpact();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      bottom: false,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 32),
-        children: [
-          const NorchaHeader(
-            eyebrow: 'Order status',
-            title: 'Did my photos\narrive?',
-            amharic: 'ፎቶዎቼ ደርሰዋል?',
+    final c = NorchaColors.of(context);
+
+    return PageScaffold(
+      chapter: 3,
+      eyebrow: 'Order status',
+      title: 'Did my photos\narrive?',
+      amharic: 'ፎቶዎቼ ደርሰዋል?',
+      ghostStyle: GhostStyle.outline,
+      ghostLeft: true,
+      trailing: ThemeButton(themes: widget.themes),
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter the reference we gave you and the phone number you '
+                'ordered with.',
+                style: NorchaType.bodySmall(c).copyWith(fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              _Field(
+                controller: _code,
+                label: 'REFERENCE',
+                hint: 'NOR-ABC123',
+                caps: TextCapitalization.characters,
+                formatters: [
+                  // The server's alphabet: no 0/O/1/I/L, so a code can be read
+                  // down a phone line without ambiguity.
+                  FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9\-]')),
+                  LengthLimitingTextInputFormatter(10),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _Field(
+                controller: _phone,
+                label: 'PHONE NUMBER',
+                hint: '09•• ••• •••',
+                keyboard: TextInputType.phone,
+                formatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+\- ]')),
+                ],
+              ),
+              const SizedBox(height: 22),
+              _PrimaryButton(
+                label: _busy ? 'Checking…' : 'Check my order',
+                busy: _busy,
+                onTap: _busy ? null : _check,
+              ),
+              const SizedBox(height: 18),
+              if (_result != null)
+                // Animated in rather than appearing: the result is the whole
+                // point of the screen and a hard cut makes it feel like a page
+                // reload rather than an answer.
+                AnimatedSwitcher(
+                  duration: Motion.medium,
+                  switchInCurve: Curves.easeOutCubic,
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.04),
+                        end: Offset.zero,
+                      ).animate(anim),
+                      child: child,
+                    ),
+                  ),
+                  child: _ResultBlock(
+                    key: ValueKey('${_result!.status}-${_result!.record?.code}'),
+                    result: _result!,
+                    onCheckAnother: () => setState(() {
+                      _result = null;
+                      _code.clear();
+                      _phone.clear();
+                    }),
+                  ),
+                ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Enter the reference we gave you and the phone number you '
-                  'ordered with.',
-                  style: NorchaType.bodySmall.copyWith(fontSize: 14),
-                ),
-                const SizedBox(height: 20),
-                _Field(
-                  controller: _code,
-                  label: 'REFERENCE',
-                  hint: 'NOR-ABC123',
-                  caps: TextCapitalization.characters,
-                  formatters: [
-                    // The server's alphabet: no 0/O/1/I/L, so a code can be
-                    // read down a phone line without ambiguity.
-                    FilteringTextInputFormatter.allow(
-                        RegExp(r'[A-Za-z0-9\-]')),
-                    LengthLimitingTextInputFormatter(10),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _Field(
-                  controller: _phone,
-                  label: 'PHONE NUMBER',
-                  hint: '09•• ••• •••',
-                  keyboard: TextInputType.phone,
-                  formatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+\- ]')),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                _PrimaryButton(
-                  label: _busy ? 'Checking…' : 'Check my order',
-                  busy: _busy,
-                  onTap: _busy ? null : _check,
-                ),
-                const SizedBox(height: 18),
-                if (_result != null) _ResultBlock(result: _result!),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -140,36 +167,37 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: NorchaType.sectionLabel),
+        Text(label, style: NorchaType.sectionLabel(c)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           keyboardType: keyboard,
           textCapitalization: caps,
           inputFormatters: formatters,
-          style: NorchaType.body.copyWith(
+          style: NorchaType.body(c).copyWith(
             fontSize: 16,
             fontWeight: FontWeight.w500,
             letterSpacing: 0.5,
           ),
-          cursorColor: NorchaPalette.pine,
+          cursorColor: Brand.action(c),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: NorchaType.body.copyWith(color: NorchaPalette.inkFaint),
+            hintStyle: NorchaType.body(c).copyWith(color: c.inkFaint),
             filled: true,
-            fillColor: NorchaPalette.card,
+            fillColor: c.card,
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(NorchaShape.sm),
-              borderSide: const BorderSide(color: NorchaPalette.line),
+              borderRadius: BorderRadius.circular(Radius.sm),
+              borderSide: BorderSide(color: c.line),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(NorchaShape.sm),
-              borderSide: const BorderSide(color: NorchaPalette.pine, width: 1.5),
+              borderRadius: BorderRadius.circular(Radius.sm),
+              borderSide: BorderSide(color: Brand.action(c), width: 1.5),
             ),
           ),
         ),
@@ -178,31 +206,31 @@ class _Field extends StatelessWidget {
   }
 }
 
-/// The result of a lookup. Renders found OR failed, never both.
 class _ResultBlock extends StatelessWidget {
   final LookupResult result;
-  const _ResultBlock({required this.result});
+  final VoidCallback onCheckAnother;
+
+  const _ResultBlock({super.key, required this.result, required this.onCheckAnother});
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+
     if (!result.ok) {
       return ClothSurface(
-        accent: NorchaPalette.warn,
+        accent: Brand.warn,
         padding: const EdgeInsets.all(18),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.info_outline,
-                size: 19, color: NorchaPalette.warn),
+            const Icon(Icons.info_outline, size: 19, color: Brand.warn),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 result.message?.call('en') ??
                     'We could not check that. Please try again.',
-                style: NorchaType.bodySmall.copyWith(
-                  fontSize: 14,
-                  color: NorchaPalette.ink,
-                ),
+                style: NorchaType.bodySmall(c)
+                    .copyWith(fontSize: 14, color: c.ink),
               ),
             ),
           ],
@@ -215,7 +243,7 @@ class _ResultBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClothSurface(
-          accent: NorchaPalette.pine,
+          accent: Brand.action(c),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,59 +251,52 @@ class _ResultBlock extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: 34, height: 34,
                     decoration: BoxDecoration(
-                      color: NorchaPalette.pine.withOpacity(0.10),
+                      color: Brand.action(c).withOpacity(0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_rounded,
-                        size: 18, color: NorchaPalette.pine),
+                    child: Icon(Icons.check_rounded,
+                        size: 18, color: Brand.action(c)),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text('We have your photos',
-                        style: NorchaType.title.copyWith(fontSize: 18)),
+                        style: NorchaType.title(c).copyWith(fontSize: 18)),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              // The reference, selectable — the customer will paste this into
-              // WhatsApp, so it must be copyable in one gesture.
+              // Selectable: the customer will paste this into WhatsApp, so it
+              // must be copyable in one gesture.
               SelectableText(
                 r.code,
-                style: NorchaType.title.copyWith(
-                  fontSize: 26,
-                  letterSpacing: 1.5,
-                  color: NorchaPalette.pine,
+                style: NorchaType.title(c).copyWith(
+                  fontSize: 26, letterSpacing: 1.5, color: Brand.action(c),
                 ),
               ),
               const SizedBox(height: 16),
-              const Divider(color: NorchaPalette.line, height: 1),
+              Divider(color: c.line, height: 1),
               const SizedBox(height: 14),
               _Row('Photos received', '${r.files}'),
-              if (r.received != null)
-                _Row('Received', _fmtDate(r.received!)),
+              if (r.received != null) _Row('Received', _fmt(r.received!)),
               if (r.requestedSummary != '—')
                 _Row('You asked for', r.requestedSummary),
               if (r.deleteAfter != null)
-                _Row('We delete them on', _fmtDate(r.deleteAfter!)),
+                _Row('We delete them on', _fmt(r.deleteAfter!)),
               const SizedBox(height: 14),
-              // The honest label. The studio has the files; a human still has to
-              // print them. Saying "ready" here would be a lie the shop has to
-              // answer for at the counter.
               Container(
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
-                  color: NorchaPalette.paperDeep,
-                  borderRadius: BorderRadius.circular(NorchaShape.xs),
+                  color: c.groundDeep,
+                  borderRadius: BorderRadius.circular(Radius.xs),
                 ),
                 child: Text(
                   r.stageNote.isEmpty
                       ? 'The studio has your photos. A person confirms sizes '
                           'and price before printing.'
                       : r.stageNote,
-                  style: NorchaType.bodySmall.copyWith(fontSize: 12.5),
+                  style: NorchaType.bodySmall(c).copyWith(fontSize: 12.5),
                 ),
               ),
             ],
@@ -284,23 +305,38 @@ class _ResultBlock extends StatelessWidget {
         const SizedBox(height: 14),
         _PrimaryButton(
           label: 'Message us on WhatsApp',
+          // Built outside the widget tree: a multi-line interpolation with a
+          // nested call is hard to read and easy to mis-parse. One variable
+          // costs nothing and makes the intent obvious.
           onTap: () => launchUrl(
-            Uri.parse('https://wa.me/${Shop.wa}?text='
-                '${Uri.encodeComponent("Hello Norcha Print! Reference: ${r.code}")}'),
+            Uri.parse(_waLink(r.code)),
             mode: LaunchMode.externalApplication,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Center(
+          child: TextButton(
+            onPressed: onCheckAnother,
+            child: Text('Check another reference',
+                style: NorchaType.bodySmall(c)
+                    .copyWith(decoration: TextDecoration.underline)),
           ),
         ),
       ],
     );
   }
 
-  static String _fmtDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
+  /// The WhatsApp handoff with the reference pre-filled, so the code lands in
+  /// the same conversation as the photos.
+  static String _waLink(String code) {
+    final text = Uri.encodeComponent('Hello Norcha Print! Reference: $code');
+    return 'https://wa.me/${Shop.wa}?text=$text';
+  }
+
+  static String _fmt(DateTime d) {
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     final l = d.toLocal();
-    return '${l.day} ${months[l.month - 1]} ${l.year}';
+    return '${l.day} ${m[l.month - 1]} ${l.year}';
   }
 }
 
@@ -311,23 +347,22 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 9),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: Text(label, style: NorchaType.bodySmall.copyWith(fontSize: 13)),
+            child: Text(label, style: NorchaType.bodySmall(c).copyWith(fontSize: 13)),
           ),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: NorchaType.bodySmall.copyWith(
-                fontSize: 13,
-                color: NorchaPalette.ink,
-                fontWeight: FontWeight.w600,
+              style: NorchaType.bodySmall(c).copyWith(
+                fontSize: 13, color: c.ink, fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -346,31 +381,30 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: onTap == null ? NorchaPalette.inkFaint : NorchaPalette.pine,
-      borderRadius: BorderRadius.circular(NorchaShape.sm),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(NorchaShape.sm),
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          child: busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: NorchaPalette.card),
-                )
-              : Text(
-                  label,
-                  style: NorchaType.body.copyWith(
-                    color: NorchaPalette.card,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+    final c = NorchaColors.of(context);
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: onTap == null ? c.inkFaint : Brand.action(c),
+          borderRadius: BorderRadius.circular(Radius.sm),
         ),
+        child: busy
+            ? SizedBox(
+                width: 18, height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Brand.onAction(c)),
+              )
+            : Text(
+                label,
+                style: NorchaType.body(c).copyWith(
+                  color: Brand.onAction(c),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }

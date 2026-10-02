@@ -1,161 +1,306 @@
 // Norcha Print — Home.
 //
-// WHAT THIS PAGE IS FOR
-// A customer opens this at the counter or on the way there. The three questions
-// they actually have, in order: (1) how much is a print, (2) will it be ready
-// before X, (3) where are you. This page answers those and nothing else — a
-// landing page that also tries to be a brochure gets read by nobody.
+// Three questions, in order: how much is a print, will it be ready before X,
+// where are you. This page answers those and nothing else.
 //
-// The price grid is deliberately the LOUDEST thing here. It is the number one
-// reason anyone opens a print shop's app, and hiding it behind a tap would be
-// a design choice that costs the shop a customer.
+// THE IMAGE IS BACK, AND IT LEADS.
+// The previous version was a price table with no photography, which is how a
+// print studio's app ends up looking like a spreadsheet. The hero image is the
+// first thing on the page and every product card carries its own photograph —
+// the images were in the repo the whole time and nothing referenced them.
 
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/holidays.dart';
 import '../../core/pricing.dart';
-import '../../theme/netela.dart';
-import '../../theme/norcha_theme.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/ghost_numerals.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
-import '../../widgets/motion_budget.dart';
+import '../../widgets/page_scaffold.dart';
 import '../shell/app_shell.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  final _scroll = ScrollController();
-
-  @override
-  void dispose() {
-    _scroll.dispose();
-    super.dispose();
-  }
+class HomePage extends StatelessWidget {
+  final ThemeController themes;
+  const HomePage({super.key, required this.themes});
 
   @override
   Widget build(BuildContext context) {
     final occasion = NorchaHolidays.current(DateTime.now());
+    final families = NorchaData.products.keys.toList();
 
-    return SafeArea(
-      bottom: false,
-      child: CustomScrollView(
-        controller: _scroll,
-        slivers: [
-          const SliverToBoxAdapter(
-            child: NorchaHeader(
-              eyebrow: 'Norcha Print · Bole',
-              title: 'Photo printing,\ndone properly.',
-              amharic: 'የፎቶ ህትመት በቦሌ',
-            ),
+    return PageScaffold(
+      chapter: 1,
+      eyebrow: 'Norcha Print · Bole',
+      title: 'Photo printing,\ndone properly.',
+      amharic: 'የፎቶ ህትመት በቦሌ',
+      ghostStyle: GhostStyle.soft,
+      trailing: ThemeButton(themes: themes),
+      children: [
+        // The hero. Full-bleed image with the studio's name set over it and a
+        // scrim, because a photograph behind text with no scrim is unreadable
+        // on a bad screen in daylight — which is where this app is used.
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: _Hero(),
+        ),
+
+        if (occasion != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+            child: _DeadlineBanner(occasion: occasion),
           ),
 
-          // The deadline card only exists when a holiday is actually close —
-          // the engine returns null deliberately often. A permanent countdown
-          // is noise, and noise stops being read.
-          if (occasion != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-                child: _DeadlineBanner(occasion: occasion),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(24, 28, 24, 10),
+          child: _SectionRule(label: 'WHAT WE MAKE'),
+        ),
+
+        for (var i = 0; i < families.length; i++)
+          Padding(
+            padding: EdgeInsets.fromLTRB(24, i == 0 ? 0 : 10, 24, 0),
+            child: _FamilyCard(family: families[i]),
+          ),
+
+        const Padding(
+          padding: EdgeInsets.fromLTRB(24, 28, 24, 10),
+          child: _SectionRule(label: 'FIND US'),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: _VisitCard(),
+        ),
+      ],
+    );
+  }
+}
+
+/// The hero. The prints photograph, scrimmed, with the shop's promise set over
+/// it in the display serif.
+class _Hero extends StatelessWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(Radius.lg),
+      child: AspectRatio(
+        aspectRatio: 16 / 11,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              'assets/images/prints.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => ColoredBox(color: c.card),
+            ),
+            // Scrim: strong at the bottom where the text sits, light at the top
+            // so the photograph still reads.
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.05),
+                    Colors.black.withOpacity(0.55),
+                  ],
+                ),
               ),
             ),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
-              child: Row(
+            // The selvedge, at the top edge of the image — the site's device,
+            // scaled to a card.
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: Container(height: 3, decoration: const BoxDecoration(gradient: Brand.selvedge)),
+            ),
+            Positioned(
+              left: 18,
+              right: 18,
+              bottom: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('PRICES', style: NorchaType.sectionLabel),
-                  const SizedBox(width: 10),
-                  Cloth.tibeb(width: 32),
+                  Text(
+                    'SAME-DAY PICKUP',
+                    style: TextStyle(
+                      fontFamily: NorchaTypeFace.body,
+                      fontSize: 10,
+                      letterSpacing: 2.2,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withOpacity(0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Your photos,\nprinted properly.',
+                    style: TextStyle(
+                      fontFamily: NorchaTypeFace.display,
+                      fontSize: 27,
+                      height: 1.1,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-
-          // Six families, each one tap from a real quote.
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            sliver: SliverList.separated(
-              itemCount: NorchaData.products.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, i) {
-                final family = NorchaData.products.keys.elementAt(i);
-                final p = NorchaData.products[family]!;
-                return StaggeredReveal(
-                  index: i,
-                  child: _FamilyRow(
-                    product: p,
-                    accent: Accent.forFamily(family),
-                    onTap: () => AppShell.of(context)?.selectTab(NorchaTab.quote),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _VisitCard(),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-/// The holiday deadline. Green when comfortable, amber when it is getting
-/// tight — the engine already computes how many days are left to order.
+class _SectionRule extends StatelessWidget {
+  final String label;
+  const _SectionRule({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+    return Row(
+      children: [
+        Text(label, style: NorchaType.sectionLabel(c)),
+        const SizedBox(width: 10),
+        Expanded(child: Container(height: 1, color: c.line)),
+      ],
+    );
+  }
+}
+
+/// One product family: its photograph, its cheapest price, one tap from a quote.
+class _FamilyCard extends StatelessWidget {
+  final String family;
+  const _FamilyCard({required this.family});
+
+  static const _images = {
+    'prints': 'assets/images/prints.jpg',
+    'canvas': 'assets/images/canvas.jpg',
+    'books': 'assets/images/books.jpg',
+    'frames': 'assets/images/frames.jpg',
+    'calendars': 'assets/images/calendar.jpg',
+    'mugs': 'assets/images/mugs.jpg',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+    final p = NorchaData.products[family]!;
+    final cheapest = p.sizes.map((s) => s.price).reduce((a, b) => a < b ? a : b);
+    final accent = Accent.forFamily(family);
+    final leadLabel = p.lead == 0
+        ? 'same day'
+        : '${p.lead} day${p.lead == 1 ? '' : 's'}';
+
+    return Pressable(
+      onTap: () => AppShell.of(context)?.selectTab(NorchaTab.quote),
+      child: ClothSurface(
+        padding: EdgeInsets.zero,
+        accent: accent.colour,
+        child: Row(
+          children: [
+            // The photograph, square, clipped into the card's left edge.
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(
+                  left: Radius.circular(17)), // Radius.md (18) minus the 1px edge
+              child: Image.asset(
+                _images[family]!,
+                width: 92,
+                height: 92,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 92,
+                  height: 92,
+                  color: c.groundDeep,
+                  alignment: Alignment.center,
+                  child: Text(
+                    GeezNumeral.at(p.sizes.length),
+                    style: TextStyle(
+                      fontFamily: NorchaTypeFace.amharic,
+                      fontSize: 26,
+                      color: c.inkFaint,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p.label.en,
+                        style: NorchaType.title(c).copyWith(fontSize: 18)),
+                    const SizedBox(height: 5),
+                    Text('${p.sizes.length} sizes · $leadLabel',
+                        style: NorchaType.bodySmall(c)),
+                    const SizedBox(height: 8),
+                    Text(
+                      NorchaData.money(cheapest),
+                      style: NorchaType.title(c).copyWith(
+                        fontSize: 19,
+                        color: accent.colour,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right_rounded,
+                  size: 20, color: c.inkFaint),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _DeadlineBanner extends StatelessWidget {
   final Occasion occasion;
   const _DeadlineBanner({required this.occasion});
 
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
     final soon = occasion.daysToOrder <= 3;
-    final colour = soon ? NorchaPalette.warn : NorchaPalette.pine;
+    final colour = soon ? Brand.warn : Brand.action(c);
 
     return ClothSurface(
       accent: colour,
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 36, height: 36,
             decoration: BoxDecoration(
               color: colour.withOpacity(0.10),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.event_outlined, size: 19, color: colour),
+            child: Icon(Icons.event_outlined, size: 18, color: colour),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  occasion.name('en'),
-                  style: NorchaType.title.copyWith(fontSize: 17),
-                ),
-                const SizedBox(height: 3),
+                Text(occasion.name('en'),
+                    style: NorchaType.title(c).copyWith(fontSize: 16)),
+                const SizedBox(height: 2),
                 Text(
                   occasion.daysToOrder <= 0
                       ? 'Last day to order is today'
                       : 'Order within ${occasion.daysToOrder} day'
                           '${occasion.daysToOrder == 1 ? '' : 's'}',
-                  style: NorchaType.bodySmall.copyWith(color: colour),
+                  style: NorchaType.bodySmall(c).copyWith(color: colour),
                 ),
               ],
             ),
@@ -166,110 +311,33 @@ class _DeadlineBanner extends StatelessWidget {
   }
 }
 
-/// One product family, with its cheapest price visible.
-///
-/// Showing "from X" rather than every size is the right density for a summary
-/// list: the full ladder belongs on the quote screen, where the customer is
-/// actually choosing.
-class _FamilyRow extends StatelessWidget {
-  final Product product;
-  final Accent accent;
-  final VoidCallback onTap;
-
-  const _FamilyRow({
-    required this.product,
-    required this.accent,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cheapest = product.sizes
-        .map((s) => s.price)
-        .reduce((a, b) => a < b ? a : b);
-
-    // Built here rather than inline: a ternary nested inside a string
-    // interpolation is unparseable in Dart, and the analyser is right to
-    // refuse it. Readable beats clever.
-    final leadLabel = product.lead == 0
-        ? 'same day'
-        : '${product.lead} day${product.lead == 1 ? '' : 's'}';
-
-    return ClothSurface(
-      accent: accent.colour,
-      padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
-      onTap: onTap,
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.label.en,
-                  style: NorchaType.title.copyWith(fontSize: 18),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  '${product.sizes.length} sizes · $leadLabel',
-                  style: NorchaType.bodySmall,
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('from', style: NorchaType.sectionLabel),
-              const SizedBox(height: 2),
-              // The number, in the display serif. This is the whole point of
-              // the row — a price set in serif reads as worth something.
-              Text(
-                NorchaData.money(cheapest),
-                style: NorchaType.title.copyWith(
-                  fontSize: 20,
-                  color: NorchaPalette.ink,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 6),
-          const Icon(Icons.chevron_right_rounded,
-              size: 20, color: NorchaPalette.inkFaint),
-        ],
-      ),
-    );
-  }
-}
-
-/// Address, hours, and the two ways to reach a human.
 class _VisitCard extends StatelessWidget {
+  const _VisitCard();
+
   @override
   Widget build(BuildContext context) {
+    final c = NorchaColors.of(context);
+
     return ClothSurface(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('VISIT', style: NorchaType.sectionLabel),
-          const SizedBox(height: 12),
-          Text('Norcha Print', style: NorchaType.title.copyWith(fontSize: 19)),
-          const SizedBox(height: 8),
-          _Fact(icon: Icons.place_outlined, text: Shop.city),
-          _Fact(icon: Icons.schedule_outlined, text: Shop.hours),
-          _Fact(icon: Icons.phone_outlined, text: Shop.phone),
-          const SizedBox(height: 16),
+          Text(Shop.city,
+              style: NorchaType.bodySmall(c)
+                  .copyWith(fontSize: 14, color: c.ink)),
+          const SizedBox(height: 4),
+          Text(Shop.hours, style: NorchaType.bodySmall(c)),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: _MiniAction(
                   label: 'WhatsApp',
                   icon: Icons.chat_outlined,
-                  primary: true,
-                  onTap: () => launchUrl(
-                    Uri.parse('https://wa.me/${Shop.wa}'),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  filled: true,
+                  onTap: () => launchUrl(Uri.parse('https://wa.me/${Shop.wa}'),
+                      mode: LaunchMode.externalApplication),
                 ),
               ),
               const SizedBox(width: 10),
@@ -277,36 +345,13 @@ class _VisitCard extends StatelessWidget {
                 child: _MiniAction(
                   label: 'Call',
                   icon: Icons.call_outlined,
-                  primary: false,
-                  onTap: () => launchUrl(
-                    Uri.parse('tel:${Shop.wa}'),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  filled: false,
+                  onTap: () => launchUrl(Uri.parse('tel:${Shop.wa}'),
+                      mode: LaunchMode.externalApplication),
                 ),
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Fact extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _Fact({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 15, color: NorchaPalette.inkFaint),
-          const SizedBox(width: 9),
-          Expanded(child: Text(text, style: NorchaType.bodySmall)),
         ],
       ),
     );
@@ -316,48 +361,42 @@ class _Fact extends StatelessWidget {
 class _MiniAction extends StatelessWidget {
   final String label;
   final IconData icon;
-  final bool primary;
+  final bool filled;
   final VoidCallback onTap;
 
   const _MiniAction({
     required this.label,
     required this.icon,
-    required this.primary,
+    required this.filled,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final fg = primary ? NorchaPalette.card : NorchaPalette.pine;
-    final bg = primary ? NorchaPalette.pine : Colors.transparent;
+    final c = NorchaColors.of(context);
+    final fg = filled ? Brand.onAction(c) : Brand.action(c);
 
     return Material(
-      color: bg,
-      borderRadius: BorderRadius.circular(NorchaShape.sm),
+      color: filled ? Brand.action(c) : Colors.transparent,
+      borderRadius: BorderRadius.circular(Radius.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(NorchaShape.sm),
+        borderRadius: BorderRadius.circular(Radius.sm),
         child: Container(
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(NorchaShape.sm),
-            border: primary
-                ? null
-                : Border.all(color: NorchaPalette.pine.withOpacity(0.35)),
+            borderRadius: BorderRadius.circular(Radius.sm),
+            border: filled ? null : Border.all(color: c.line),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: fg),
               const SizedBox(width: 7),
-              Text(
-                label,
-                style: NorchaType.bodySmall.copyWith(
-                  color: fg,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              Text(label,
+                  style: NorchaType.bodySmall(c).copyWith(
+                      color: fg, fontWeight: FontWeight.w600, fontSize: 13)),
             ],
           ),
         ),
