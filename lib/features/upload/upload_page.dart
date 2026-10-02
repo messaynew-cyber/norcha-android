@@ -22,7 +22,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
 import '../../services/photo_upload.dart';
-import '../../theme/netela.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/cloth_surface.dart';
 import '../shell/app_shell.dart';
@@ -92,7 +91,6 @@ class _UploadPageState extends State<UploadPage> {
   }
 
   Future<void> _send() async {
-    final product = NorchaData.products[_family]!;
     final req = UploadRequest(
       photos: _photos,
       name: _name.text,

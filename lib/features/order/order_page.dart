@@ -18,7 +18,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
-import '../../theme/netela.dart';
 import '../../theme/norcha_theme.dart';
 import '../../widgets/cloth_surface.dart';
 import '../shell/app_shell.dart';
