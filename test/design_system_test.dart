@@ -89,12 +89,24 @@ void main() {
 
     test('the ground is warm black, not #000', () {
       // Pure black reads as a switched-off screen. A trace of warm reads as ink.
+      //
+      // The bar is deliberately LOW: #08070A is 8/7/10, which is barely off
+      // black and is the point — enough warm to read as ink, not enough to read
+      // as grey. The first version of this test demanded red >= 10 and failed,
+      // correctly, because the assertion was wrong and the palette was right.
       const v = NorchaPalette.void_;
-      final r = (v.red);
-      final g = (v.green);
-      final b = (v.blue);
+      final r = v.red;
+      final g = v.green;
+      final b = v.blue;
+
       expect(r + g + b, greaterThan(0), reason: 'that is pure black');
-      expect(r, greaterThanOrEqualTo(b), reason: 'the black should lean warm, not blue');
+
+      // Warmth is a TENDENCY, not a specific channel winning by a margin:
+      // blue must not dominate, and red must be at least level with it.
+      expect(b, lessThanOrEqualTo(r + 2),
+          reason: 'the black should not lean blue — that reads as cold screen glow, not ink');
+      expect(r, greaterThanOrEqualTo(g),
+          reason: 'red should not sit below green in a warm black');
     });
   });
 

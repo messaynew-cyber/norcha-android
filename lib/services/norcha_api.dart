@@ -175,7 +175,7 @@ class NorchaApi {
         json = jsonDecode(body) as Map<String, dynamic>;
       } catch (_) {
         return const LookupResult(LookupStatus.networkError,
-            message: const Bi(
+            message: Bi(
               'We could not reach the studio. Check your connection and try again.',
               'ከስቱዲዮ ጋር መገናኘት አልቻልንም። ኢንተርኔትዎን ያረጋግጡ።',
             ));
@@ -194,38 +194,38 @@ class NorchaApi {
         case 404:
           // 🔴 ONE message for every 404 — see the note at the top of this file.
           return const LookupResult(LookupStatus.notFound,
-              message: const Bi(
+              message: Bi(
                 'We could not find an order with that reference and phone number. Check both, or message us on WhatsApp.',
                 'በዚህ ቁጥር እና ስልክ ቁጥር ትዕዛዝ አልተገኘም። ሁለቱንም ያረጋግጡ ወይም በዋትስአፕ ያግኙን።',
               ));
         case 429:
           return const LookupResult(LookupStatus.rateLimited,
-              message: const Bi(
+              message: Bi(
                 'Too many checks from this connection. Please try again later, or message us on WhatsApp.',
                 'ከዚህ ግንኙነት ብዙ ጊዜ ተፈልጎዋል። ቆይተው ይሞክሩ ወይም በዋትስአፕ ያግኙን።',
               ));
         case 503:
           return const LookupResult(LookupStatus.notConfigured,
-              message: const Bi(
+              message: Bi(
                 'Order lookup is not switched on yet. Message us on WhatsApp and we will check for you.',
                 'የትዕዛዝ ፍለጋ ገና አልተከፈተም። በዋትስአፕ ያግኙን።',
               ));
         default:
           return const LookupResult(LookupStatus.networkError,
-              message: const Bi(
+              message: Bi(
                 'Something went wrong on our side. Please message us on WhatsApp.',
                 'በእኛ በኩል ችግር ተፈጥሯል። በዋትስአፕ ያግኙን።',
               ));
       }
     } on TimeoutException {
       return const LookupResult(LookupStatus.networkError,
-          message: const Bi(
+          message: Bi(
             'That took too long. Check your connection and try again.',
             'ጊዜው አልፎበታል። ኢንተርኔትዎን ያረጋግጡ።',
           ));
     } catch (_) {
       return const LookupResult(LookupStatus.networkError,
-          message: const Bi(
+          message: Bi(
             'We could not reach the studio. Check your connection and try again.',
             'ከስቱዲዮ ጋር መገናኘት አልቻልንም። ኢንተርኔትዎን ያረጋግጡ።',
           ));

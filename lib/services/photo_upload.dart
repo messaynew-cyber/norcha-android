@@ -110,7 +110,7 @@ class PhotoUpload {
       if (size > maxPerFileMb * 1048576) {
         final mb = (size / 1048576).toStringAsFixed(1);
         return UploadFailure('too-big', Bi(
-          'One photo is $mb MB — larger than the ${maxPerFileMb} MB limit. Send that one on WhatsApp.',
+          'One photo is $mb MB — larger than the $maxPerFileMb MB limit. Send that one on WhatsApp.',
           'አንድ ፎቶ $mb MB ነው — ከ$maxPerFileMb MB በላይ። ያንን በዋትስአፕ ይላኩ።',
         ));
       }
@@ -118,7 +118,7 @@ class PhotoUpload {
 
       final ext = f.path.split('.').last.toLowerCase();
       if (!_okExt.contains(ext)) {
-        return UploadFailure('bad-type', Bi(
+        return const UploadFailure('bad-type', Bi(
           'Only photos are accepted (JPG, PNG, HEIC, WebP, TIFF).',
           'ፎቶዎች ብቻ ይቀበላሉ (JPG, PNG, HEIC, WebP, TIFF)።',
         ));
