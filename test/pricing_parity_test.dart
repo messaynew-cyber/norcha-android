@@ -158,20 +158,22 @@ void main() {
 
   group('quote — real shop prices end to end', () {
     test('canvas 40x60 at qty 1 carries no discount', () {
+      // 1,900 original x 1.40 = 2,660 sell.
       final q = NorchaData.quote('canvas', 'canvas-40x60', 1)!;
-      expect(q.unit, 1900);
-      expect(q.gross, 1900);
+      expect(q.unit, 2660);
+      expect(q.gross, 2660);
       expect(q.pct, 0);
-      expect(q.total, 1900);
+      expect(q.total, 2660);
     });
 
     test('two canvases take the wall ladder 10%', () {
+      // 300 original x 1.40 = 420 sell.
       final q = NorchaData.quote('canvas', 'canvas-10x15', 2)!;
-      expect(q.unit, 300);
-      expect(q.gross, 600);
+      expect(q.unit, 420);
+      expect(q.gross, 840);
       expect(q.pct, 10);
-      expect(q.discount, 60);
-      expect(q.total, 540);
+      expect(q.discount, 84);
+      expect(q.total, 756);
     });
 
     test('a framed print is a wall item too', () {
