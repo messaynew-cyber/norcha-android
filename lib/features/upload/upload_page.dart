@@ -253,7 +253,7 @@ class _UploadPageState extends State<UploadPage> {
         ],
 
         const SizedBox(height: 22),
-        Text(L.t('upload.forWhat', lang), style: NorchaType.sectionLabel(c)),
+        Text(L.t('upload.forWhat', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -276,7 +276,7 @@ class _UploadPageState extends State<UploadPage> {
         ),
 
         const SizedBox(height: 18),
-        Text(L.t('upload.sizeOpt', lang), style: NorchaType.sectionLabel(c)),
+        Text(L.t('upload.sizeOpt', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
         const SizedBox(height: 10),
         Wrap(
           spacing: 8,
@@ -457,7 +457,7 @@ class _SuccessCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 18),
-              Text(L.t('upload.yourRef', lang), style: NorchaType.sectionLabel(c)),
+              Text(L.t('upload.yourRef', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
               const SizedBox(height: 8),
               SelectableText(
                 success.code,
@@ -550,10 +550,13 @@ class _TextInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    // See the note on order_page's _Field: the label is content and changes
+    // script with the language, so its style must change with it.
+    final amharic = LangController.of(context).lang.isAmharic;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: NorchaType.sectionLabel(c)),
+        Text(label, style: NorchaType.sectionLabel(c, amharic: amharic)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,

@@ -177,10 +177,14 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
+    // Read the language here rather than threading it through every call site:
+    // the label above a field is content, so it changes script with the
+    // language, and its style has to change with it.
+    final amharic = LangController.of(context).lang.isAmharic;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: NorchaType.sectionLabel(c)),
+        Text(label, style: NorchaType.sectionLabel(c, amharic: amharic)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,

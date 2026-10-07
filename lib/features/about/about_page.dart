@@ -117,7 +117,7 @@ class _OpenCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(L.t('studio.findUs', lang), style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.findUs', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
           const SizedBox(height: 12),
           _Line(icon: Icons.place_outlined, text: Shop.city),
           const SizedBox(height: 4),
@@ -155,7 +155,7 @@ class _ReachCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(L.t('studio.talk', lang), style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.talk', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
           const SizedBox(height: 12),
           SelectableText(Shop.phone,
               style: NorchaType.title(c).copyWith(fontSize: 21)),
@@ -206,7 +206,7 @@ class _TimingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(L.t('studio.howLong', lang), style: NorchaType.sectionLabel(c)),
+          Text(L.t('studio.howLong', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
           const SizedBox(height: 12),
           Text(NorchaDelivery.readyPhrase(ready, 'en'),
               style: NorchaType.title(c).copyWith(fontSize: 20)),
@@ -249,7 +249,7 @@ class _PhotoPrivacyCard extends StatelessWidget {
             children: [
               const Icon(Icons.lock_outline_rounded, size: 17, color: Brand.gold),
               const SizedBox(width: 9),
-              Text(L.t('studio.yourPhotos', lang), style: NorchaType.sectionLabel(c)),
+              Text(L.t('studio.yourPhotos', lang), style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)),
             ],
           ),
           const SizedBox(height: 12),

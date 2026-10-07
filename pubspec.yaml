@@ -33,3 +33,22 @@ flutter:
   generate: true
   assets:
     - assets/images/
+
+  # 🔴 FONTS ARE BUNDLED, NOT FETCHED — the comment in app_theme.dart has
+  # always claimed this, but `fonts:` was never declared and assets/fonts did
+  # not exist. Every family the app asked for was therefore resolved against
+  # whatever the device happened to have, which is not something a shop counter
+  # should depend on.
+  #
+  # All three are the real Google Fonts variable files (weight axis intact), so
+  # one file per family covers every weight the app uses.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit.ttf
+    - family: EB Garamond
+      fonts:
+        - asset: assets/fonts/EBGaramond.ttf
+    - family: Noto Serif Ethiopic
+      fonts:
+        - asset: assets/fonts/NotoSerifEthiopic.ttf

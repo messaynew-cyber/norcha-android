@@ -23,6 +23,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../core/lang.dart';
+
 import '../theme/app_theme.dart';
 
 /// The ceremonial selvedge: three dyed threads, emerald → gold → oxblood.
@@ -294,7 +296,12 @@ class EthiopianSectionHeader extends StatelessWidget {
         children: [
           const AdeyAbeba(size: 10),
           const SizedBox(width: 9),
-          Text(label, style: NorchaType.sectionLabel(c)),
+          // The label is content and follows the app language, so it must
+          // render in the script-appropriate face with room for Ethiopic's
+          // taller metrics.
+          Text(label,
+              style: NorchaType.sectionLabel(c,
+                  amharic: LangController.of(context).lang.isAmharic)),
           const SizedBox(width: 10),
           Expanded(child: Container(height: 1, color: c.line)),
           if (trailing != null) ...[
