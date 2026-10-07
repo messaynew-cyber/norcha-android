@@ -37,6 +37,7 @@ import 'package:norcha_print/features/order/order_page.dart';
 import 'package:norcha_print/features/upload/upload_page.dart';
 import 'package:norcha_print/theme/app_theme.dart';
 import 'package:norcha_print/theme/theme_controller.dart';
+import 'package:norcha_print/widgets/diagnostic_banner.dart';
 
 /// Measured from the shipped Noto Serif Ethiopic with fontTools, 2026-10-07.
 const double kEthiopicLineEm = 1.362;
@@ -171,6 +172,76 @@ void main() {
         expect(p.label.am.trim(), isNotEmpty, reason: '$family: no Amharic');
         expect(p.label.en.trim(), isNotEmpty, reason: '$family: no English');
       }
+    });
+  });
+
+  group('the diagnostic overlay cannot break the app', () {
+    // 🔴 THIS TEST EXISTS BECAUSE THE OVERLAY DID BREAK IT.
+    //
+    // The first version wrapped MaterialApp from the OUTSIDE, where there is no
+    // Directionality. It builds a Stack with Positioned children, and a
+    // Positioned needs a text direction — so the app threw on its first build
+    // and showed a blank white screen. The diagnostic tool took down the app it
+    // was meant to diagnose, and could not report its own error because the
+    // banner was inside the failing subtree.
+    //
+    // These pump the overlay in exactly the hostile positions that broke it.
+
+    testWidgets('mounts WITHOUT any ambient Directionality', (tester) async {
+      // No MaterialApp, no Directionality, no MediaQuery — the shape that
+      // produced the white screen.
+      await tester.pumpWidget(DiagnosticHost(child: Container()));
+      expect(tester.takeException(), isNull,
+          reason: 'the overlay threw when it had no Directionality above it');
+    });
+
+    testWidgets('mounts inside a bare View', (tester) async {
+      await tester.pumpWidget(
+        Directionality(
+          textDirection: TextDirection.ltr,
+          child: DiagnosticHost(child: const SizedBox()),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('renders its child, not just itself', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        builder: (context, child) =>
+            DiagnosticHost(child: child ?? const SizedBox.shrink()),
+        home: const Scaffold(body: Text('PAGE CONTENT')),
+      ));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(find.text('PAGE CONTENT'), findsOneWidget,
+          reason: 'the overlay hid or replaced the page');
+    });
+
+    testWidgets('shows the build tag when there are no errors', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        builder: (context, child) =>
+            DiagnosticHost(child: child ?? const SizedBox.shrink()),
+        home: const Scaffold(body: Text('x')),
+      ));
+      await tester.pump();
+      expect(find.textContaining('no errors'), findsOneWidget,
+          reason: 'the banner must always show the build identity');
+    });
+
+    testWidgets('surfaces a recorded error instead of swallowing it',
+        (tester) async {
+      Diagnostics.clear();
+      Diagnostics.record('TEST', 'something went wrong');
+      await tester.pumpWidget(MaterialApp(
+        builder: (context, child) =>
+            DiagnosticHost(child: child ?? const SizedBox.shrink()),
+        home: const Scaffold(body: Text('x')),
+      ));
+      await tester.pump();
+      expect(find.textContaining('1 ERROR'), findsOneWidget);
+      expect(find.textContaining('something went wrong'), findsOneWidget,
+          reason: 'a recorded error must appear on screen, not only in a log');
+      Diagnostics.clear();
     });
   });
 

@@ -1,26 +1,23 @@
 // Norcha Print — the diagnostic banner.
 //
 // 🔴 WHY THIS EXISTS
-// A bug was reported twice: switching to Amharic left the Order and Upload
-// bodies painting as a flat grey rectangle, in a colour that appears nowhere
-// in this app's palette. Two fixes were attempted from reading source code,
-// and both were wrong. The failure does not reproduce in a widget test, the
-// Flutter test font has imaginary metrics, and reading logcat requires the app
-// to be running at the moment someone looks.
+// A bug was reported: switching to Amharic left the Order and Upload bodies
+// painting as a flat grey rectangle. Two fixes were attempted from reading
+// source code and both were wrong, so the app was given a way to report on
+// itself instead of being guessed at.
 //
-// Guessing from a screenshot does not work. So the app now reports on itself.
+// ⚠️ AND THEN IT CAUSED A WORSE BUG. The first version wrapped MaterialApp
+// from OUTSIDE, which put it above Directionality and MediaQuery. It builds a
+// Stack with Positioned children, and a Positioned requires a text direction,
+// so the app threw on its first build and showed a blank white screen — and
+// the banner could not report that error, because the widget that draws the
+// banner was inside the thing that broke.
 //
-// This banner catches every error Flutter would otherwise swallow or print to
-// a console nobody is watching, keeps the last few, and shows them ON TOP of
-// the page. A screenshot then carries the cause, not just the symptom.
-//
-// 💡 IT IS ALWAYS PRESENT, EVEN WHEN THERE IS NO ERROR. That is deliberate: a
-// banner that only appears when something breaks is one more thing that can
-// fail to appear. This one says "no errors" and shows a build tag, which also
-// answers "which APK am I running?" — a question that cost real time during
-// the investigation above.
-//
-// It is dismissible and remembers that, so it never obstructs normal use.
+// Two lessons, both encoded below:
+//   1. This mounts inside MaterialApp.builder, never around it.
+//   2. It supplies its own Directionality if the ambient tree has none, so it
+//      can never be the reason the app fails to open. A diagnostic tool that
+//      can take down the thing it diagnoses is worse than no tool.
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -28,8 +25,8 @@ import 'package:flutter/material.dart';
 import '../core/version.dart';
 
 /// Holds captured errors for the session. Deliberately a plain static list:
-/// this is diagnostic furniture, not application state, and it must work even
-/// if the widget tree itself is the thing that is broken.
+/// this is diagnostic furniture, not application state, and it must keep
+/// working even when the widget tree is the thing that is broken.
 class Diagnostics {
   static final List<String> _errors = <String>[];
   static final ValueNotifier<int> revision = ValueNotifier<int>(0);
@@ -38,16 +35,15 @@ class Diagnostics {
   static bool get hasErrors => _errors.isNotEmpty;
 
   static void record(String label, Object error, [StackTrace? stack]) {
-    final firstFrame = stack == null
+    final frames = stack == null
         ? ''
         : stack.toString().split('\n').take(4).join(' | ');
-    final entry = '$label\n$error${firstFrame.isEmpty ? '' : '\n$firstFrame'}';
-    // Keep it short. Ten full Flutter stacks would not fit on a phone screen
-    // and the first two are almost always the informative ones.
+    final entry = '$label\n$error${frames.isEmpty ? '' : '\n$frames'}';
+    // Ten full Flutter stacks would not fit on a phone screen, and the first
+    // two are nearly always the informative ones.
     _errors.add(entry.length > 700 ? '${entry.substring(0, 700)}…' : entry);
     if (_errors.length > 5) _errors.removeAt(0);
     revision.value++;
-    // Also to the console, so a logcat capture still works.
     debugPrint('[NORCHA-DIAG] $label :: $error');
   }
 
@@ -57,7 +53,7 @@ class Diagnostics {
   }
 }
 
-/// Wraps the app and overlays the banner.
+/// Draws the banner over [child]. Mount this from MaterialApp's `builder`.
 class DiagnosticHost extends StatefulWidget {
   final Widget child;
   const DiagnosticHost({super.key, required this.child});
@@ -67,10 +63,9 @@ class DiagnosticHost extends StatefulWidget {
 }
 
 class _DiagnosticHostState extends State<DiagnosticHost> {
-  // Starts EXPANDED so the very first screenshot already carries the build
-  // tag and any captured error. Collapsing is one tap and the choice sticks
-  // for the session. The whole point of this widget is that a screenshot must
-  // not depend on the person remembering to open it.
+  // Starts EXPANDED so the first screenshot a person takes already carries the
+  // build tag and any captured error. A banner that must be opened first is one
+  // more thing that can fail to be opened.
   bool _collapsed = false;
 
   @override
@@ -79,39 +74,42 @@ class _DiagnosticHostState extends State<DiagnosticHost> {
       valueListenable: Diagnostics.revision,
       builder: (context, _, __) {
         final n = Diagnostics.errors.length;
-        final bad = n > 0;
-        return Stack(
-          children: [
-            widget.child,
-            // Bottom-anchored so it never covers the page header, which is the
-            // part of these pages that has always rendered correctly.
-            Positioned(
-              left: 8,
-              right: 8,
-              bottom: 8,
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (!_collapsed)
-                      _Body(errors: Diagnostics.errors),
-                    _Bar(
-                      bad: bad,
-                      count: n,
-                      collapsed: _collapsed,
-                      onTap: () => setState(() => _collapsed = !_collapsed),
-                      onClear: () {
-                        Diagnostics.clear();
-                        setState(() => _collapsed = true);
-                      },
-                    ),
-                  ],
+        // Supplied explicitly so this can mount anywhere without throwing.
+        // This single line is the fix for the blank white screen.
+        return Directionality(
+          textDirection: Directionality.maybeOf(context) ?? TextDirection.ltr,
+          child: Stack(
+            children: [
+              widget.child,
+              // Bottom-anchored: never covers the page header, which is the
+              // part of these pages that has always rendered correctly.
+              Positioned(
+                left: 8,
+                right: 8,
+                bottom: 8,
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (!_collapsed) _Body(errors: Diagnostics.errors),
+                      _Bar(
+                        bad: n > 0,
+                        count: n,
+                        collapsed: _collapsed,
+                        onTap: () => setState(() => _collapsed = !_collapsed),
+                        onClear: () {
+                          Diagnostics.clear();
+                          setState(() => _collapsed = true);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

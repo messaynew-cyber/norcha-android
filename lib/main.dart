@@ -130,8 +130,21 @@ class _NorchaAppState extends State<NorchaApp> {
   Widget build(BuildContext context) {
     return LangScope(
       controller: widget.langs,
-      child: DiagnosticHost(
-        child: MaterialApp(
+      child: MaterialApp(
+        // 🔴 DiagnosticHost goes in `builder:`, NOT around MaterialApp.
+        //
+        // It was wrapped AROUND MaterialApp first, which put it above
+        // Directionality, MediaQuery and Theme. DiagnosticHost builds a Stack
+        // with Positioned children, and a Positioned requires a text
+        // direction — so the app threw on its first build and showed a blank
+        // white screen. Worse, the banner could not report the error, because
+        // the widget that draws the banner was inside the thing that threw.
+        //
+        // `builder:` runs BELOW MaterialApp, so the overlay inherits
+        // Directionality, MediaQuery and Theme. It also keeps the overlay
+        // ABOVE the Navigator, so it survives page changes.
+        builder: (context, child) =>
+            DiagnosticHost(child: child ?? const SizedBox.shrink()),
         title: 'Norcha Print',
         debugShowCheckedModeBanner: false,
         theme: NorchaThemeData.build(_c),
@@ -154,8 +167,7 @@ class _NorchaAppState extends State<NorchaApp> {
             AboutPage(themes: widget.themes, langs: widget.langs),
           ],
         ),
-        ),   // MaterialApp
-      ),     // DiagnosticHost
+      ),   // MaterialApp
     );
   }
 }
