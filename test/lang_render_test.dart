@@ -224,7 +224,10 @@ void main() {
         home: const Scaffold(body: Text('x')),
       ));
       await tester.pump();
-      expect(find.textContaining('no errors'), findsOneWidget,
+      // The banner carries the build tag; the expanded body also says
+      // "no errors recorded this session". Two matches is correct — match the
+      // one that carries the identity.
+      expect(find.textContaining('no errors ·'), findsOneWidget,
           reason: 'the banner must always show the build identity');
     });
 
