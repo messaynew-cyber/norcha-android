@@ -34,11 +34,6 @@ void main() {
       'canvas-50x80': 3500,  // 2500 × 1.40
       'canvas-60x90': 3780,  // 2700 × 1.40
       'canvas-60x120': 6440, // 4600 × 1.40
-      // ⚠️ UNRESOLVED — Price List 2, already marked up, so NOT multiplied.
-      // Breaks the ladder: same price as 50×80 (4,000 cm²) and 2,940 cheaper
-      // than 60×120 (7,200 cm²). Asserted as supplied so it fails loudly when
-      // the shop corrects it.
-      'canvas-80x120': 3500,
     };
 
     test('every sheet size exists at the sheet price', () {
@@ -73,6 +68,20 @@ void main() {
       });
     });
 
+    test('80 x 120 is GONE — removed 2026-10-07, not merely unpriced', () {
+      // It arrived as 3,500, which sat below the smaller 60x120 (6,440) and
+      // equal to 50x80. Rather than ship a figure that undercuts the range,
+      // the size was removed entirely. This test makes sure a stray
+      // re-introduction has to be deliberate.
+      final keys = NorchaData.products['canvas']!.sizes.map((s) => s.key);
+      expect(keys.any((k) => k.contains('80x120')), isFalse);
+      expect(NorchaData.priceOf('canvas', 'canvas-80x120'), isNull);
+
+      final framed = NorchaData.products['frames']!.sizes.map((s) => s.key);
+      expect(framed.any((k) => k.contains('80x120')), isFalse,
+          reason: 'the frame went too — a frame for a print we do not sell');
+    });
+
     test('45 x 60 is absent — the sheet has a dash, not a price', () {
       expect(NorchaData.products['canvas']!.sizes
           .any((s) => s.key.contains('45x60')), isFalse);
@@ -84,10 +93,6 @@ void main() {
       expect(NorchaData.priceOf('frames', 'frame-a4'), 2200);
       expect(NorchaData.priceOf('frames', 'frame-a3'), 2800);
       expect(NorchaData.priceOf('frames', 'frame-40x60'), 5600);
-      // ⚠️ flagged as a likely typo in pricing.dart, but asserted as supplied
-      // so the number can never drift silently. If the shop corrects it,
-      // change it in BOTH places and let this test tell you.
-      expect(NorchaData.priceOf('frames', 'frame-80x120'), 28000);
     });
 
     test('calendar is A5 only, at 1,680', () {

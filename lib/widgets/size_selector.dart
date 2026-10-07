@@ -24,17 +24,39 @@ import '../core/lang.dart';
 import '../core/pricing.dart';
 import '../theme/app_theme.dart';
 
-/// Aspect ratio (w/h) per size key. Anything unlisted falls back to a neutral
-/// 4:5 so the grid never has a hole in it — a missing shape is worse than an
-/// approximate one.
-const Map<String, double> _kAspect = {
-  'std-10x15': 10 / 15, 'std-13x18': 13 / 18, 'std-15x21': 15 / 21,
-  'std-20x30': 20 / 30, 'std-a4': 21 / 30, 'std-a3': 30 / 42,
-  'canvas-30x40': 30 / 40, 'canvas-40x60': 40 / 60,
-  'canvas-60x80': 60 / 80, 'canvas-80x120': 80 / 120,
-  'frame-a4': 21 / 30, 'frame-a3': 30 / 42, 'frame-40x60': 40 / 60,
-  'cal-a4': 21 / 30, 'cal-a3': 30 / 42,
+/// Aspect ratio (w/h) per size key.
+///
+/// 🔴 THIS MAP USED TO BE A HAND-MAINTAINED LIST AND IT ROTTED. It named sizes
+/// that no longer existed (canvas-30x40, canvas-60x80, canvas-80x120, cal-a4,
+/// cal-a3) and was missing every size the shop's own sheet actually sells
+/// (canvas-10x15 through canvas-60x120, cal-a5). Anything unlisted fell back to
+/// a neutral 4:5 — so the selector drew EVERY tile the same shape regardless of
+/// the real proportions, silently, for the whole catalogue.
+///
+/// A hardcoded list of product keys is a second source of truth, and a second
+/// source of truth drifts. These are derived from the KEY ITSELF where the key
+/// carries a size (canvas-40x60, std-20x30, frame-40x60), and only the paper
+/// sizes, which cannot be derived, are still named.
+const Map<String, double> _kPaperAspect = {
+  // Paper sizes — not derivable from the key.
+  'std-a4': 21 / 30, 'std-a3': 30 / 42,
+  'frame-a4': 21 / 30, 'frame-a3': 30 / 42,
+  'cal-a5': 148 / 210, // A5 is portrait 148 × 210 mm
+  'cal-a4': 21 / 30,   // kept: older keys may still appear in saved quotes
+  'cal-a3': 30 / 42,
 };
+
+/// Shape of a size key. Prefers the dimensions in the key, then the paper
+/// table, then a neutral 4:5 so the grid never has a hole in it.
+double aspectFor(String key) {
+  final m = RegExp(r'(\d+)x(\d+)$').firstMatch(key);
+  if (m != null) {
+    final w = int.parse(m.group(1)!);
+    final h = int.parse(m.group(2)!);
+    if (w > 0 && h > 0) return w / h;
+  }
+  return _kPaperAspect[key] ?? 4 / 5;
+}
 
 class SizeSelector extends StatelessWidget {
   final Product product;
@@ -68,7 +90,7 @@ class SizeSelector extends StatelessWidget {
         final s = product.sizes[i];
         return SizeTile(
           size: s,
-          aspect: _kAspect[s.key] ?? 0.8,
+          aspect: aspectFor(s.key),
           selected: s.key == selected,
           onTap: () => onSelect(s.key),
         );

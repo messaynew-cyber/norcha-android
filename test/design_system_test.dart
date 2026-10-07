@@ -11,13 +11,64 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:norcha_print/core/pricing.dart';
 import 'package:norcha_print/theme/app_theme.dart';
 import 'package:norcha_print/theme/ghost_numerals.dart';
 import 'package:norcha_print/widgets/cloth_surface.dart';
+import 'package:norcha_print/widgets/size_selector.dart';
 
 int lum(Color c) => c.red + c.green + c.blue;
 
 void main() {
+  group('size selector shapes', () {
+    // The selector draws each size at its REAL proportion — that shape is the
+    // part doing the selling. It used to read a hand-maintained map that had
+    // rotted: it named sizes that no longer existed and omitted every size the
+    // shop actually sells, so EVERY tile silently fell back to a neutral 4:5.
+    // Proportions are now derived from the key, and these lock that in.
+
+    test('a size key yields its true width/height ratio', () {
+      expect(aspectFor('canvas-10x15'), closeTo(10 / 15, 1e-9));
+      expect(aspectFor('canvas-40x60'), closeTo(40 / 60, 1e-9));
+      expect(aspectFor('canvas-60x120'), closeTo(60 / 120, 1e-9));
+      expect(aspectFor('frame-40x60'), closeTo(40 / 60, 1e-9));
+      expect(aspectFor('std-20x30'), closeTo(20 / 30, 1e-9));
+    });
+
+    test('portrait stays under 1, landscape stays over it', () {
+      expect(aspectFor('canvas-10x15'), lessThan(1));
+      expect(aspectFor('canvas-30x90'), lessThan(1));
+      expect(aspectFor('canvas-60x120'), lessThan(1));
+      // No product in the real catalogue is landscape; a key that is would
+      // return > 1 rather than being flattened to the fallback.
+      expect(aspectFor('test-120x60'), greaterThan(1));
+    });
+
+    test('paper sizes that cannot be derived are still exact', () {
+      expect(aspectFor('std-a4'), closeTo(21 / 30, 1e-9));
+      expect(aspectFor('std-a3'), closeTo(30 / 42, 1e-9));
+      expect(aspectFor('frame-a3'), closeTo(30 / 42, 1e-9));
+      expect(aspectFor('cal-a5'), closeTo(148 / 210, 1e-9));
+    });
+
+    test('EVERY size the shop sells has a real shape, not the fallback', () {
+      // The regression guard: no catalogue entry may fall back.
+      for (final family in ['prints', 'canvas', 'frames', 'calendars']) {
+        // ignore: avoid_dynamic_calls
+        for (final s in NorchaData.products[family]!.sizes) {
+          final a = aspectFor(s.key);
+          expect(a, isNot(closeTo(4 / 5, 1e-9)),
+              reason: '${s.key} fell back to the neutral 4:5 shape');
+        }
+      }
+    });
+
+    test('a shapeless product falls back rather than throwing', () {
+      expect(aspectFor('mug-1'), closeTo(4 / 5, 1e-9));
+      expect(aspectFor('book-standard'), closeTo(4 / 5, 1e-9));
+    });
+  });
+
   group('the two themes are both complete and genuinely different', () {
     test('light and dark define every token', () {
       for (final c in [NorchaColors.light, NorchaColors.dark]) {

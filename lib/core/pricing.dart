@@ -10,9 +10,12 @@
 //   • Price_List_1.xlsx holds the ORIGINAL (supplier) prices. They are the COST.
 //     A sell price is cost / 0.6, i.e. cost × 1.40, then rounded.
 //   • Price List 2 holds prices ALREADY marked up. They are sell prices as-is.
-// Ten canvas sizes below come from the first kind and carry the ×1.40. The
-// 80x120 canvas and every frame / calendar / book / mug come from the second
-// kind and are used exactly as given.
+// The ten canvas sizes below come from the first kind and carry the ×1.40.
+// Every frame / calendar / book / mug comes from the second kind and is used
+// exactly as given.
+//
+// 80 × 120 is gone, in both canvas and framed form — see the notes at each
+// site, or PRICE-SOURCES.md.
 //
 // "BOARD" on the sheet means CANVAS. Confirmed by the Architect 2026-10-07.
 //
@@ -33,8 +36,8 @@ class Shop {
   static const cutoffHour = 16; // same-day cut-off
 
   /// The shop supplied its own sheet on 2026-10-07, so the prices below are
-  /// real. Two numbers are still pending confirmation and are flagged inline:
-  /// 80x120 canvas (a price inversion) and 80x120 framed (looks like a typo).
+  /// real. Standard prints are the one exception — the shop has never given
+  /// paper-print prices and those six entries are still placeholders.
   static const pricesAreTemporary = false;
 }
 
@@ -123,27 +126,13 @@ class NorchaData {
       PrintSize('canvas-50x80', '50 × 80 cm', 3500),
       PrintSize('canvas-60x90', '60 × 90 cm', 3780),
       PrintSize('canvas-60x120', '60 × 120 cm', 6440),
-      // 🔴 [ARCHITECT] 3,500 IS UNRESOLVED AND ALMOST CERTAINLY WRONG — raises
-      // the shop 1,100 per unit and undercuts the whole canvas range.
-      //
-      //   50 × 80  = 4,000 cm²   3,500
-      //   60 × 120 = 7,200 cm²   6,440
-      //   80 × 120 = 9,600 cm²   3,500   <- same price as 50x80, and 2,940
-      //                                     CHEAPER than the smaller 60x120.
-      //
-      // A customer comparing sizes sees the largest canvas at the price of a
-      // mid one. This is not a discount, it is a hole.
-      //
-      // The coincidence that explains it: 3,500 ÷ 1.40 = 2,500, which is
-      // EXACTLY the sheet's 50 × 80 original. So this figure is very likely the
-      // 50 × 80 row mislabelled. Scaling the 60 × 120 original (4,600 at
-      // 7,200 cm²) to 9,600 cm² gives ~6,133 → ~8,590 sell; priced by shape
-      // rather than raw area, a fair figure is realistically 6,000-7,500.
-      //
-      // Kept at 3,500 as instructed and asserted in the test, so it cannot
-      // drift silently. ⚠️ CONFIRM WITH THE SHOP BEFORE THIS SHIPS TO A
-      // CUSTOMER.
-      PrintSize('canvas-80x120', '80 × 120 cm', 3500),
+      // 80 × 120 was REMOVED here on 2026-10-07. See PRICE-SOURCES.md.
+      // The shop's typed list carried it as 3,500, which is inconsistent with
+      // its own ladder — 50 × 80 (4,000 cm²) is also 3,500 and 60 × 120
+      // (7,200 cm²) is 6,440, so the LARGEST canvas was priced below a smaller
+      // one. 3,500 ÷ 1.40 = 2,500, which is exactly the sheet's 50 × 80
+      // original, so that number was most likely the 50 × 80 row mislabelled.
+      // Rather than ship a figure that undercuts the range, the size is gone.
     ]),
 
     // ---- BLACK WOOD FRAMES WITH GLASS -----------------------------------
@@ -153,11 +142,10 @@ class NorchaData {
       PrintSize('frame-a4', 'A4 framed', 2200),
       PrintSize('frame-a3', 'A3 framed', 2800),
       PrintSize('frame-40x60', '40 × 60 cm framed', 5600),
-      // ✅ [ARCHITECT] confirmed REAL on 2026-10-07, not a typo. It is a steep
-      // step — 40 × 60 is 5,600 and this is 5× that for 2.3× the area, which
-      // implies a much heavier moulding and glass at this size — but the shop
-      // has confirmed the figure, so it stands.
-      PrintSize('frame-80x120', '80 × 120 cm framed', 28000),
+      // 80 × 120 framed was REMOVED on 2026-10-07 alongside the canvas of the
+      // same size — the Architect asked for 80 × 120 gone from the app, and a
+      // frame you cannot buy the print for is a dead entry. The 28,000 figure
+      // was confirmed real, so if this size comes back, restore that number.
     ]),
 
     // ---- CALENDAR -------------------------------------------------------
