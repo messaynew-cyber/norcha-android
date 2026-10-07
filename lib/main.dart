@@ -8,6 +8,8 @@
 // motion throughout. Two controllers are created here and threaded down: theme
 // and language. A provider package for two ChangeNotifiers would be furniture.
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -22,8 +24,39 @@ import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 
+/// 🔴 DIAGNOSTIC HOOK — added 2026-10-07 while chasing a bug where the Order
+/// and Upload bodies paint as a flat grey rectangle in Amharic, a colour that
+/// appears nowhere in this app's palette. Nothing in the widget tree throws in
+/// a test, so the failure is device-only. This catches it where it happens and
+/// prints the first line of the real error to logcat, so the next screenshot
+/// comes with a cause attached instead of a guess.
+void _installErrorLogger() {
+  final previous = FlutterError.onError;
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // `context` is where the failing widget was in the tree, which is the
+    // whole point — it names the widget, not just the exception.
+    debugPrint('[NORCHA-ERROR] ${details.exceptionAsString()}');
+    if (details.context != null) {
+      debugPrint('[NORCHA-ERROR-CONTEXT] ${details.context}');
+    }
+    if (details.stack != null) {
+      debugPrint('[NORCHA-ERROR-STACK] ${details.stack.toString().split("\n").take(6).join(" | ")}');
+    }
+    previous?.call(details);
+  };
+  // Errors that happen outside a build — async, platform channels, image
+  // decode — surface here instead, and a platform-channel failure is a prime
+  // suspect for a surface that never paints.
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[NORCHA-ASYNC-ERROR] $error');
+    debugPrint('[NORCHA-ASYNC-STACK] ${stack.toString().split("\n").take(6).join(" | ")}');
+    return true;
+  };
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _installErrorLogger();
 
   // Reminders were built in Phase 1 and still work — they are the one thing the
   // website cannot do. Failure here must never block the app from opening: a

@@ -125,6 +125,46 @@ void main() {
           reason: 'page stayed blank after switching back');
     });
 
+    testWidgets('text fields are keyed by language', (tester) async {
+      // The bug: swapping language reused the TextField element, so the
+      // platform InputConnection stayed alive across the rebuild and the
+      // field's slot painted as the framework's default grey — wiping the
+      // body of Order and Upload in Amharic.
+      //
+      // The fix is a per-language key, which forces the old field to dispose
+      // (tearing the connection down). This asserts the key EXISTS and that it
+      // actually differs between the two languages — a key that never changes
+      // would fix nothing.
+      final langs = LangController();
+      final themes = ThemeController();
+
+      await pumpPage(
+          tester, OrderPage(themes: themes, langs: langs), langs, themes);
+      final enKeys = find
+          .byType(TextField)
+          .evaluate()
+          .map((e) => e.widget.key)
+          .whereType<ValueKey<String>>()
+          .map((k) => k.value)
+          .toSet();
+      expect(enKeys, isNotEmpty, reason: 'Order fields carry no key at all');
+
+      langs.set(NorchaLang.am);
+      await tester.pumpAndSettle(const Duration(seconds: 2));
+
+      final amKeys = find
+          .byType(TextField)
+          .evaluate()
+          .map((e) => e.widget.key)
+          .whereType<ValueKey<String>>()
+          .map((k) => k.value)
+          .toSet();
+      expect(amKeys, isNotEmpty, reason: 'Amharic Order fields carry no key');
+      expect(enKeys.intersection(amKeys), isEmpty,
+          reason: 'the field key did not change with the language, so the '
+              'element would be reused and the platform connection kept');
+    });
+
     testWidgets('every product family has both labels', (tester) async {
       for (final family in NorchaData.products.keys) {
         final p = NorchaData.products[family]!;
@@ -161,6 +201,40 @@ void main() {
         expect(s.fontFamily, NorchaTypeFace.amharic,
             reason: '$name does not name the Ethiopic face');
       });
+    });
+
+    test('every weight the app uses is DECLARED, so none is synthesised', () {
+      // A variable font registered without a `weight:` key is pinned to the
+      // font's own default (Outfit's is 100 — Thin) and every other weight is
+      // faked by smearing a second offset copy of the glyph. On the stroked
+      // Ge'ez ghost numerals that reads as a DOUBLED outline.
+      //
+      // This checks the app does not ask for a weight the bundle does not
+      // declare. The list below mirrors pubspec.yaml's four entries per family
+      // and is meant to fail the moment pubspec and the code disagree.
+      const declared = {400, 500, 600, 700};
+      final used = <int>{};
+      // Every style NorchaType exposes, at the weight it sets.
+      final styles = <TextStyle>[
+        NorchaType.displayXL(NorchaColors.light),
+        NorchaType.display(NorchaColors.light),
+        NorchaType.title(NorchaColors.light),
+        NorchaType.sectionLabel(NorchaColors.light),
+        NorchaType.sectionLabel(NorchaColors.light, amharic: true),
+        NorchaType.body(NorchaColors.light),
+        NorchaType.bodySmall(NorchaColors.light),
+        NorchaType.amharicText(NorchaColors.light),
+        NorchaType.forText(NorchaColors.light, true),
+        NorchaType.mono(NorchaColors.light),
+      ];
+      for (final st in styles) {
+        final w = (st.fontWeight ?? FontWeight.w400).value;
+        used.add(w);
+        expect(declared, contains(w),
+            reason: 'a style asks for w$w but pubspec does not declare it, '
+                'so Flutter will synthesise it');
+      }
+      expect(used, isNotEmpty);
     });
 
     test('the three families are the ones the bundle declares', () {

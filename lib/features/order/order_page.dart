@@ -180,13 +180,26 @@ class _Field extends StatelessWidget {
     // Read the language here rather than threading it through every call site:
     // the label above a field is content, so it changes script with the
     // language, and its style has to change with it.
-    final amharic = LangController.of(context).lang.isAmharic;
+    final lang = LangController.of(context).lang;
+    final amharic = lang.isAmharic;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: NorchaType.sectionLabel(c, amharic: amharic)),
         const SizedBox(height: 8),
         TextField(
+          // 🔴 KEYED BY LANGUAGE, DELIBERATELY.
+          // On Android a TextField keeps a platform InputConnection alive for
+          // the keyboard. A language change rebuilds this whole page, and
+          // without a key the TextField's element — and that live connection —
+          // is REUSED across the rebuild. The result was the field's container
+          // painting as the framework's default grey (#B6B6B6), a colour that
+          // appears nowhere in this app, wiping the body of this page and the
+          // Upload page whenever Amharic was selected.
+          //
+          // Keying on the language makes the old field dispose properly (which
+          // tears the connection down) and a fresh one build in its place.
+          key: ValueKey('order-field-${lang.code}'),
           controller: controller,
           keyboardType: keyboard,
           textCapitalization: caps,
