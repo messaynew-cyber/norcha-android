@@ -19,19 +19,26 @@ import 'package:norcha_print/core/pricing.dart';
 
 void main() {
   group('the shop sheet — canvas ("BOARD")', () {
-    // Verbatim from Price_List_1.xlsx, checked 2026-10-07.
+    // 🔴 SELL prices. Price_List_1.xlsx holds ORIGINAL (supplier) prices, so
+    // each one is ×1.40 (40% margin — the shop outsources all printing).
+    // Written as the FINAL sell figure, with the original in the comment, so a
+    // future reader can see the markup happened exactly once.
     const sheet = {
-      'canvas-10x15': 300,
-      'canvas-15x20': 500,
-      'canvas-20x30': 750,
-      'canvas-30x46': 1300,
-      'canvas-30x60': 1600,
-      'canvas-30x90': 1900,
-      'canvas-40x60': 1900,
-      'canvas-50x80': 2500,
-      'canvas-60x90': 2700,
-      'canvas-60x120': 4600,
-      'canvas-80x120': 3500, // from Price List 2
+      'canvas-10x15': 420,   // 300 × 1.40
+      'canvas-15x20': 700,   // 500 × 1.40
+      'canvas-20x30': 1050,  // 750 × 1.40
+      'canvas-30x46': 1820,  // 1300 × 1.40
+      'canvas-30x60': 2240,  // 1600 × 1.40
+      'canvas-30x90': 2660,  // 1900 × 1.40
+      'canvas-40x60': 2660,  // 1900 × 1.40
+      'canvas-50x80': 3500,  // 2500 × 1.40
+      'canvas-60x90': 3780,  // 2700 × 1.40
+      'canvas-60x120': 6440, // 4600 × 1.40
+      // ⚠️ UNRESOLVED — Price List 2, already marked up, so NOT multiplied.
+      // Breaks the ladder: same price as 50×80 (4,000 cm²) and 2,940 cheaper
+      // than 60×120 (7,200 cm²). Asserted as supplied so it fails loudly when
+      // the shop corrects it.
+      'canvas-80x120': 3500,
     };
 
     test('every sheet size exists at the sheet price', () {
@@ -47,6 +54,23 @@ void main() {
         expect(sheet.containsKey(s.key), isTrue,
             reason: '${s.key} is not on the shop sheet');
       }
+    });
+
+    test('the markup was applied once — no size is still at its original', () {
+      // Guards the exact bug this file shipped with: raw sheet prices going
+      // out at 40% below the shop's margin.
+      const originals = {
+        'canvas-10x15': 300, 'canvas-15x20': 500, 'canvas-20x30': 750,
+        'canvas-30x46': 1300, 'canvas-30x60': 1600, 'canvas-30x90': 1900,
+        'canvas-40x60': 1900, 'canvas-50x80': 2500, 'canvas-60x90': 2700,
+        'canvas-60x120': 4600,
+      };
+      originals.forEach((key, original) {
+        expect(NorchaData.priceOf('canvas', key), (original * 1.4).round(),
+            reason: '$key must be sold at 40% over its original');
+        expect(NorchaData.priceOf('canvas', key), isNot(original),
+            reason: '$key is still at the ORIGINAL price — markup missing');
+      });
     });
 
     test('45 x 60 is absent — the sheet has a dash, not a price', () {

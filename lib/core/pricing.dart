@@ -5,6 +5,15 @@
 // js/norcha-data.js is NO LONGER the price reference — every number it carried
 // was a placeholder and none of them were the shop's real prices.
 //
+// 🔴 TWO PRICE KINDS — DO NOT CONFUSE THEM
+// Norcha outsources all printing and takes a 40% margin on every print.
+//   • Price_List_1.xlsx holds the ORIGINAL (supplier) prices. They are the COST.
+//     A sell price is cost / 0.6, i.e. cost × 1.40, then rounded.
+//   • Price List 2 holds prices ALREADY marked up. They are sell prices as-is.
+// Ten canvas sizes below come from the first kind and carry the ×1.40. The
+// 80x120 canvas and every frame / calendar / book / mug come from the second
+// kind and are used exactly as given.
+//
 // "BOARD" on the sheet means CANVAS. Confirmed by the Architect 2026-10-07.
 //
 // test/pricing_parity_test.dart previously diffed this file against the website.
@@ -104,22 +113,36 @@ class NorchaData {
     // with a dash and NO price, so it is deliberately absent here rather than
     // guessed. Lead time 1 day, as the original site carried.
     'canvas': Product('canvas', Bi('Canvas prints', 'የካንቫስ ህትመት'), 1, 'wall', [
-      PrintSize('canvas-10x15', '10 × 15 cm', 300),
-      PrintSize('canvas-15x20', '15 × 20 cm', 500),
-      PrintSize('canvas-20x30', '20 × 30 cm', 750),
-      PrintSize('canvas-30x46', '30 × 46 cm', 1300),
-      PrintSize('canvas-30x60', '30 × 60 cm', 1600),
-      PrintSize('canvas-30x90', '30 × 90 cm', 1900),
-      PrintSize('canvas-40x60', '40 × 60 cm', 1900),
-      PrintSize('canvas-50x80', '50 × 80 cm', 2500),
-      PrintSize('canvas-60x90', '60 × 90 cm', 2700),
-      PrintSize('canvas-60x120', '60 × 120 cm', 4600),
-      // ⚠️ [ARCHITECT] 3,500 as instructed, but this BREAKS THE LADDER:
-      // 60 × 120 (7,200 cm²) is 4,600 while 80 × 120 (9,600 cm²) is 3,500 —
-      // the bigger canvas is 1,100 CHEAPER, and cost/cm² drops 0.639 -> 0.365.
-      // Every other size steps down smoothly. Suspect a dropped digit (8,500?)
-      // or that 60 × 120 is the wrong one. Left exactly as instructed — do not
-      // "fix" without the shop saying so.
+      PrintSize('canvas-10x15', '10 × 15 cm', 420),
+      PrintSize('canvas-15x20', '15 × 20 cm', 700),
+      PrintSize('canvas-20x30', '20 × 30 cm', 1050),
+      PrintSize('canvas-30x46', '30 × 46 cm', 1820),
+      PrintSize('canvas-30x60', '30 × 60 cm', 2240),
+      PrintSize('canvas-30x90', '30 × 90 cm', 2660),
+      PrintSize('canvas-40x60', '40 × 60 cm', 2660),
+      PrintSize('canvas-50x80', '50 × 80 cm', 3500),
+      PrintSize('canvas-60x90', '60 × 90 cm', 3780),
+      PrintSize('canvas-60x120', '60 × 120 cm', 6440),
+      // 🔴 [ARCHITECT] 3,500 IS UNRESOLVED AND ALMOST CERTAINLY WRONG — raises
+      // the shop 1,100 per unit and undercuts the whole canvas range.
+      //
+      //   50 × 80  = 4,000 cm²   3,500
+      //   60 × 120 = 7,200 cm²   6,440
+      //   80 × 120 = 9,600 cm²   3,500   <- same price as 50x80, and 2,940
+      //                                     CHEAPER than the smaller 60x120.
+      //
+      // A customer comparing sizes sees the largest canvas at the price of a
+      // mid one. This is not a discount, it is a hole.
+      //
+      // The coincidence that explains it: 3,500 ÷ 1.40 = 2,500, which is
+      // EXACTLY the sheet's 50 × 80 original. So this figure is very likely the
+      // 50 × 80 row mislabelled. Scaling the 60 × 120 original (4,600 at
+      // 7,200 cm²) to 9,600 cm² gives ~6,133 → ~8,590 sell; priced by shape
+      // rather than raw area, a fair figure is realistically 6,000-7,500.
+      //
+      // Kept at 3,500 as instructed and asserted in the test, so it cannot
+      // drift silently. ⚠️ CONFIRM WITH THE SHOP BEFORE THIS SHIPS TO A
+      // CUSTOMER.
       PrintSize('canvas-80x120', '80 × 120 cm', 3500),
     ]),
 
@@ -130,9 +153,10 @@ class NorchaData {
       PrintSize('frame-a4', 'A4 framed', 2200),
       PrintSize('frame-a3', 'A3 framed', 2800),
       PrintSize('frame-40x60', '40 × 60 cm framed', 5600),
-      // ⚠️ [ARCHITECT] 28,000 is almost certainly a typo. 40 × 60 is 5,600;
-      // 28,000 is 5× that for 2.3× the area. Extrapolating the A3 -> 40×60
-      // step (+2,800) gives roughly 8,400. Left as instructed, flagged here.
+      // ✅ [ARCHITECT] confirmed REAL on 2026-10-07, not a typo. It is a steep
+      // step — 40 × 60 is 5,600 and this is 5× that for 2.3× the area, which
+      // implies a much heavier moulding and glass at this size — but the shop
+      // has confirmed the figure, so it stands.
       PrintSize('frame-80x120', '80 × 120 cm framed', 28000),
     ]),
 
