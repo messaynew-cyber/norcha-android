@@ -16,6 +16,7 @@ import '../../core/delivery.dart';
 import '../../core/holidays.dart';
 import '../../core/lang.dart';
 import '../../core/pricing.dart';
+import '../../core/version.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
@@ -98,7 +99,10 @@ class _Monogram extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        Text('${Shop.name} · v0.3', style: NorchaType.bodySmall(c).copyWith(fontSize: 12)),
+        // Read from the build, never hardcoded again. This said 'v0.3' for
+        // four consecutive builds, which is worse than no version at all.
+        Text('${Shop.name} · ${NorchaVersion.display}',
+            style: NorchaType.bodySmall(c).copyWith(fontSize: 12)),
       ],
     );
   }

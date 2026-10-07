@@ -116,7 +116,27 @@ class GhostNumeral extends StatelessWidget {
                     text: numeral,
                     size: size,
                     colour: Brand.gold,
-                    strokeWidth: 1.6,
+                    // 🔴 THE STROKE MUST SCALE WITH THE GLYPH.
+                    //
+                    // This was a fixed 1.6, tuned when the Ethiopic family was
+                    // supplied by the system font. The real Noto Serif Ethiopic
+                    // at w600 has stems ~30px wide at size 250 (measured), so a
+                    // 1.6px stroke centred on such a stem draws two hairlines
+                    // 30px apart with nothing between — a hollow stem that at
+                    // this scale reads as a SECOND OFFSET COPY of the numeral.
+                    // That is the "doubled" appearance.
+                    //
+                    // 0.045 of the size gives ~11px at the 250px numeral.
+                    // Measured: a stem at that size is ~30px wide, so the two
+                    // edges of the outline sit ~19px apart — close enough to
+                    // read as ONE outlined shape rather than two separate
+                    // copies. At the old fixed 1.6 the gap was 28px, almost a
+                    // full stem width, which is why it looked doubled.
+                    //
+                    // Tying it to `size` keeps that proportion right whatever
+                    // the numeral is drawn at, instead of being a magic number
+                    // that silently broke the moment the font changed.
+                    strokeWidth: (size * 0.045).clamp(1.0, 14.0),
                   ),
           ),
         ),

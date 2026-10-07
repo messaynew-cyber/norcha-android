@@ -83,8 +83,17 @@ jobs:
 
       - run: flutter pub get
 
+      # 🔴 STAMP THE BUILD'S IDENTITY INTO THE BINARY.
+      # Without this a shipped APK cannot say which build it is. During the
+      # Amharic investigation that cost real time: the About page showed a
+      # hardcoded 'v0.3' that had not changed in four builds, and a screenshot
+      # cannot identify itself. NorchaVersion reads these two defines, and the
+      # diagnostic banner displays them, so any screenshot now names its build.
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --dart-define=NORCHA_VERSION="0.4.${{ github.run_number }}" \
+            --dart-define=NORCHA_SHA="${{ github.sha }}"
 
       - name: Stage artifact with a readable name
         run: |

@@ -23,33 +23,36 @@ import 'features/upload/upload_page.dart';
 import 'services/notification_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'widgets/diagnostic_banner.dart';
 
-/// 🔴 DIAGNOSTIC HOOK — added 2026-10-07 while chasing a bug where the Order
-/// and Upload bodies paint as a flat grey rectangle in Amharic, a colour that
-/// appears nowhere in this app's palette. Nothing in the widget tree throws in
-/// a test, so the failure is device-only. This catches it where it happens and
-/// prints the first line of the real error to logcat, so the next screenshot
-/// comes with a cause attached instead of a guess.
+/// 🔴 DIAGNOSTIC HOOK — the app reports on itself.
+///
+/// A bug was reported twice — Order and Upload painting as a flat grey
+/// rectangle in Amharic — and two fixes were attempted from reading source
+/// code. Both were wrong. The failure does not reproduce in a test (Flutter's
+/// test font has imaginary metrics and there are no platform views), so the
+/// only reliable witness is the device itself.
+///
+/// Everything caught here goes to Diagnostics, which the banner in
+/// widgets/diagnostic_banner.dart draws ON TOP of the page. That means a
+/// screenshot carries the cause instead of just the symptom, which is the
+/// difference between this round and the last two.
 void _installErrorLogger() {
   final previous = FlutterError.onError;
   FlutterError.onError = (FlutterErrorDetails details) {
-    // `context` is where the failing widget was in the tree, which is the
-    // whole point — it names the widget, not just the exception.
-    debugPrint('[NORCHA-ERROR] ${details.exceptionAsString()}');
-    if (details.context != null) {
-      debugPrint('[NORCHA-ERROR-CONTEXT] ${details.context}');
-    }
-    if (details.stack != null) {
-      debugPrint('[NORCHA-ERROR-STACK] ${details.stack.toString().split("\n").take(6).join(" | ")}');
-    }
+    Diagnostics.record(
+      'BUILD${details.context == null ? '' : ' — ${details.context}'}',
+      details.exceptionAsString(),
+      details.stack,
+    );
     previous?.call(details);
   };
-  // Errors that happen outside a build — async, platform channels, image
-  // decode — surface here instead, and a platform-channel failure is a prime
-  // suspect for a surface that never paints.
+
+  // Errors outside a build — async work, platform channels, image decode —
+  // arrive here instead. A platform-channel failure is a prime suspect for a
+  // surface that never paints, so these matter as much as build errors.
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    debugPrint('[NORCHA-ASYNC-ERROR] $error');
-    debugPrint('[NORCHA-ASYNC-STACK] ${stack.toString().split("\n").take(6).join(" | ")}');
+    Diagnostics.record('ASYNC', error, stack);
     return true;
   };
 }
@@ -127,7 +130,8 @@ class _NorchaAppState extends State<NorchaApp> {
   Widget build(BuildContext context) {
     return LangScope(
       controller: widget.langs,
-      child: MaterialApp(
+      child: DiagnosticHost(
+        child: MaterialApp(
         title: 'Norcha Print',
         debugShowCheckedModeBanner: false,
         theme: NorchaThemeData.build(_c),
@@ -150,7 +154,8 @@ class _NorchaAppState extends State<NorchaApp> {
             AboutPage(themes: widget.themes, langs: widget.langs),
           ],
         ),
-      ),
+        ),   // MaterialApp
+      ),     // DiagnosticHost
     );
   }
 }
