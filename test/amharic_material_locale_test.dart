@@ -137,8 +137,6 @@ void main() {
 
     testWidgets('switching en -> am at runtime keeps the field alive',
         (tester) async {
-      final langs = LangController();
-
       Widget build(NorchaLang l) => _appUnderTest(
             lang: l,
             child: _norchaField(l, key: ValueKey('order-field-${l.code}')),
