@@ -12,6 +12,18 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// 🔴 REQUIRED, AND ITS ABSENCE WAS A SHIPPED BUG.
+// Material's own widgets — TextField above all — resolve their decoration
+// through MaterialLocalizations.of(context). Without these delegates the
+// Localizations widget falls back to DefaultMaterialLocalizations, which
+// only speaks English. Setting `locale: Locale('am')` in supportedLocales
+// then makes that lookup resolve to NOTHING, and TextField throws
+// 'Null check operator used on a null value' inside text_field.dart.
+//
+// This is a DIFFERENT bug from the stale-InputConnection grey (#B6B6B6)
+// fixed by the ValueKey on the Order and Upload fields. Same symptom,
+// same two widgets, different cause. Both are now covered by tests.
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/lang.dart';
 import 'features/about/about_page.dart';
@@ -151,6 +163,14 @@ class _NorchaAppState extends State<NorchaApp> {
         themeMode: _c.isDark ? ThemeMode.dark : ThemeMode.light,
         themeAnimationDuration: Motion.medium,
         themeAnimationCurve: Curves.easeInOutCubic,
+        // 🔴 THE DELEGATES ARE NOT OPTIONAL. See the import comment above.
+        // `locale` alone makes Flutter ACCEPT 'am' and then fail to RESOLVE
+        // it, which is worse than not setting it at all.
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         // Amharic needs a locale set or Flutter's own widgets (the date picker,
         // long-press menus) stay English underneath an Amharic screen.
         locale: Locale(widget.langs.lang.code),
