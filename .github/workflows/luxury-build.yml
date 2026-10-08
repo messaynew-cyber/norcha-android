@@ -13,7 +13,11 @@ name: Luxury Build
 
 on:
   push:
-    branches: [main, phase2-api]
+    # 🔴 pricing-real IS THE LIVE BRANCH. It was in NO workflow's trigger
+    # list, which meant the branch holding all the current work only ever
+    # built when a human remembered to dispatch it by hand. That is how a
+    # fix ends up pushed, green, and still not on the phone.
+    branches: [main, pricing-real, phase2-api]
   pull_request:
   workflow_dispatch:
 
@@ -83,8 +87,29 @@ jobs:
 
       - run: flutter pub get
 
+      # 🔴 STAMP THE BUILD'S IDENTITY INTO THE BINARY.
+      # Without this a shipped APK cannot say which build it is. During the
+      # Amharic investigation that cost real time: the About page showed a
+      # hardcoded 'v0.3' that had not changed in four builds, and a screenshot
+      # cannot identify itself. NorchaVersion reads these two defines, and the
+      # diagnostic banner displays them, so any screenshot now names its build.
+      - name: Read VERSION
+        id: ver
+        run: |
+          # Human version from the repo, build number from the run.
+          # Neither alone is enough: VERSION says WHAT this is, the run
+          # number says WHICH build of it. Together: 0.5.0+42
+          V=$(head -n1 VERSION | tr -d "[:space:]")
+          if [ -z "$V" ]; then echo "VERSION file is empty" >&2; exit 1; fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "stamp=$V+${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "Norcha $V+${{ github.run_number }}"
+
       - name: Build release APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --dart-define=NORCHA_VERSION="${{ steps.ver.outputs.stamp }}" \
+            --dart-define=NORCHA_SHA="${{ github.sha }}"
 
       - name: Stage artifact with a readable name
         run: |
@@ -104,12 +129,16 @@ jobs:
       # A release asset is how the phone actually gets the APK — downloading a
       # workflow artifact requires auth and a zip extract; a release asset is
       # one tap. This is the delivery path that matters.
+      # 🔴 THE RELEASE IS THE DELIVERY PATH. `if:` used to be main-only, so a
+      # build dispatched from pricing-real produced an artifact nobody could
+      # install without auth + a zip extract — which is why the APK ended up
+      # as a loose file in Downloads instead of a release asset.
       - name: Publish to a Release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pricing-real'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.2.${{ github.run_number }}
-          name: Norcha Luxury v0.2.${{ github.run_number }}
+          tag_name: v${{ steps.ver.outputs.version }}-b${{ github.run_number }}
+          name: Norcha ${{ steps.ver.outputs.version }} build ${{ github.run_number }}
           body: |
             Automated build from ${{ github.sha }}.
 

@@ -1,13 +1,27 @@
 // Norcha Print — the single source of truth for products, prices and lead times.
 //
-// PORTED FROM: feven-prints-v2/js/norcha-data.js  @ fcf4b70 (2026-09-24)
-// This is a 1:1 port. If a number changes on the website, change it here too —
-// test/pricing_parity_test.dart diffs the two implementations and fails on any
-// disagreement of more than zero birr.
+// SOURCE: the shop's OWN price sheet (Price_List_1.xlsx, the "BOARD" column) and
+// Price List 2, both supplied by the Architect on 2026-10-07. The website's
+// js/norcha-data.js is NO LONGER the price reference — every number it carried
+// was a placeholder and none of them were the shop's real prices.
 //
-// ⚠️ [FEVEN] Every price below is marked TEMPORARY and must be confirmed before
-// this app is handed to a real customer. They came from the existing website,
-// not from the shop.
+// 🔴 TWO PRICE KINDS — DO NOT CONFUSE THEM
+// Norcha outsources all printing and takes a 40% margin on every print.
+//   • Price_List_1.xlsx holds the ORIGINAL (supplier) prices. They are the COST.
+//     A sell price is cost / 0.6, i.e. cost × 1.40, then rounded.
+//   • Price List 2 holds prices ALREADY marked up. They are sell prices as-is.
+// The ten canvas sizes below come from the first kind and carry the ×1.40.
+// Every frame / calendar / book / mug comes from the second kind and is used
+// exactly as given.
+//
+// 80 × 120 is gone, in both canvas and framed form — see the notes at each
+// site, or PRICE-SOURCES.md.
+//
+// "BOARD" on the sheet means CANVAS. Confirmed by the Architect 2026-10-07.
+//
+// test/pricing_parity_test.dart previously diffed this file against the website.
+// That test must now be regenerated from THIS file — the website is the thing
+// that has to catch up, not the app.
 //
 // Lead times are in PRODUCTION DAYS (working days, before shipping/pickup).
 
@@ -21,8 +35,10 @@ class Shop {
   static const hours = 'Mon-Sat 8:30-19:00, Sun 10:00-17:00';
   static const cutoffHour = 16; // same-day cut-off
 
-  /// Flip to false when Feven confirms the price sheet.
-  static const pricesAreTemporary = true;
+  /// The shop supplied its own sheet on 2026-10-07, so the prices below are
+  /// real. Standard prints are the one exception — the shop has never given
+  /// paper-print prices and those six entries are still placeholders.
+  static const pricesAreTemporary = false;
 }
 
 /// A bilingual label. Amharic is not a translation afterthought here — it is
@@ -79,6 +95,13 @@ class Quote {
 
 class NorchaData {
   static const Map<String, Product> products = {
+    // ---- STANDARD PRINTS (paper) ----------------------------------------
+    // 🔴 [ARCHITECT] NOT SUPPLIED. The shop's sheet covers "BOARD" (canvas)
+    // only, and Price List 2 has no plain paper prints. These six numbers are
+    // the OLD PLACEHOLDERS, kept so 'prints' remains a valid family — it is
+    // the DEFAULT selection in quote_page.dart and upload_page.dart, so
+    // deleting it crashes both screens.
+    // ⚠️ THESE PRICES ARE NOT REAL. Get them from the shop.
     'prints': Product('prints', Bi('Standard prints', 'መደበኛ ህትመት'), 0, 'photos', [
       PrintSize('std-10x15', '10 × 15 cm', 25),
       PrintSize('std-13x18', '13 × 18 cm', 40),
@@ -87,36 +110,69 @@ class NorchaData {
       PrintSize('std-a4', 'A4 · 21 × 30 cm', 150),
       PrintSize('std-a3', 'A3 · 30 × 42 cm', 280),
     ]),
+
+    // ---- CANVAS  (the shop's sheet calls this "BOARD") ------------------
+    // Straight from Price_List_1.xlsx. 11 sizes; "45 x 60" is on the sheet
+    // with a dash and NO price, so it is deliberately absent here rather than
+    // guessed. Lead time 1 day, as the original site carried.
     'canvas': Product('canvas', Bi('Canvas prints', 'የካንቫስ ህትመት'), 1, 'wall', [
-      PrintSize('canvas-30x40', '30 × 40 cm', 950),
-      PrintSize('canvas-40x60', '40 × 60 cm', 1600),
-      PrintSize('canvas-60x80', '60 × 80 cm', 2700),
-      PrintSize('canvas-80x120', '80 × 120 cm', 4600),
+      PrintSize('canvas-10x15', '10 × 15 cm', 420),
+      PrintSize('canvas-15x20', '15 × 20 cm', 700),
+      PrintSize('canvas-20x30', '20 × 30 cm', 1050),
+      PrintSize('canvas-30x46', '30 × 46 cm', 1820),
+      PrintSize('canvas-30x60', '30 × 60 cm', 2240),
+      PrintSize('canvas-30x90', '30 × 90 cm', 2660),
+      PrintSize('canvas-40x60', '40 × 60 cm', 2660),
+      PrintSize('canvas-50x80', '50 × 80 cm', 3500),
+      PrintSize('canvas-60x90', '60 × 90 cm', 3780),
+      PrintSize('canvas-60x120', '60 × 120 cm', 6440),
+      // 80 × 120 was REMOVED here on 2026-10-07. See PRICE-SOURCES.md.
+      // The shop's typed list carried it as 3,500, which is inconsistent with
+      // its own ladder — 50 × 80 (4,000 cm²) is also 3,500 and 60 × 120
+      // (7,200 cm²) is 6,440, so the LARGEST canvas was priced below a smaller
+      // one. 3,500 ÷ 1.40 = 2,500, which is exactly the sheet's 50 × 80
+      // original, so that number was most likely the 50 × 80 row mislabelled.
+      // Rather than ship a figure that undercuts the range, the size is gone.
     ]),
-    'books': Product('books', Bi('Photo books', 'የፎቶ መጽሐፍ'), 2, 'books', [
-      PrintSize('book-20x20-20', '20 × 20 cm · 20 pages', 1800),
-      PrintSize('book-21x21-30', '21 × 21 cm · 30 pages', 2600),
-      PrintSize('book-28x28-40', '28 × 28 cm · 40 pages', 3800),
-      PrintSize('book-30x30-80', '30 × 30 cm · 80 pages', 6400),
+
+    // ---- BLACK WOOD FRAMES WITH GLASS -----------------------------------
+    // A separate product line, not framed canvas — the sizes are paper sizes.
+    // Confirmed by the Architect 2026-10-07: black wood frame + glass.
+    'frames': Product('frames', Bi('Black wood frames · glass', 'ጥቁር እንጨት ፍሬም · ብርጭቆ'), 1, 'wall', [
+      PrintSize('frame-a4', 'A4 framed', 2200),
+      PrintSize('frame-a3', 'A3 framed', 2800),
+      PrintSize('frame-40x60', '40 × 60 cm framed', 5600),
+      // 80 × 120 framed was REMOVED on 2026-10-07 alongside the canvas of the
+      // same size — the Architect asked for 80 × 120 gone from the app, and a
+      // frame you cannot buy the print for is a dead entry. The 28,000 figure
+      // was confirmed real, so if this size comes back, restore that number.
     ]),
-    'frames': Product('frames', Bi('Framed prints', 'የተከፈፈ ህትመት'), 1, 'wall', [
-      PrintSize('frame-a4', 'A4 framed', 600),
-      PrintSize('frame-a3', 'A3 framed', 900),
-      PrintSize('frame-40x60', '40 × 60 cm framed', 1500),
+
+    // ---- CALENDAR -------------------------------------------------------
+    // A5 ONLY. Confirmed by the Architect: this is the only size it comes in.
+    // The old A4/A3 wall-calendar entries were placeholders and are deleted.
+    'calendars': Product('calendars', Bi('Calendar', 'የቀን መቁጠሪያ'), 1, 'wall', [
+      PrintSize('cal-a5', 'A5 calendar', 1680),
     ]),
-    'calendars': Product('calendars', Bi('Wall calendars', 'የግድግዳ የቀን መቁጠሪያ'), 1, 'wall', [
-      PrintSize('cal-a4', 'A4 wall calendar', 450),
-      PrintSize('cal-a3', 'A3 wall calendar', 700),
+
+    // ---- PHOTO BOOK -----------------------------------------------------
+    // The shop gave one figure: 1,820. That is treated as the single photo-book
+    // price. The four old sizes (1,800 / 2,600 / 3,800 / 6,400) were
+    // placeholders and are gone.
+    // ⚠️ [ARCHITECT] confirm whether 1,820 is one fixed book or the entry tier.
+    'books': Product('books', Bi('Photo book', 'የፎቶ መጽሐፍ'), 2, 'books', [
+      PrintSize('book-standard', 'Photo book', 1820),
     ]),
-    // 🔴 tier: 'mugs' is DELIBERATELY its own ladder — a flat one.
-    // Mugs already carry pack pricing in `sizes` (1/2/4 at 350/650/1200).
-    // Applying a percentage ladder on top DOUBLE-DISCOUNTS: "2 mugs" came out
-    // as 650 via the 2-pack and 644 via 350×2 −8%. Two prices for one order.
-    // Do not "fix" this by giving mugs the `gifts` ladder.
-    'mugs': Product('mugs', Bi('Photo mugs', 'የፎቶ ሙግ'), 0, 'mugs', [
-      PrintSize('mug-1', '1 mug', 350),
-      PrintSize('mug-2', '2 mugs', 650),
-      PrintSize('mug-4', '4 mugs', 1200),
+
+    // ---- PHOTO MUG ------------------------------------------------------
+    // 1,120 from the shop. The old 350 / 650 / 1200 pack ladder was a
+    // placeholder. ONE size now — a mug is a mug, so the old double-discount
+    // trap (a 2-pack price colliding with the gifts ladder) cannot happen:
+    // there is no longer a pack size to collide with.
+    // ⚠️ [ARCHITECT] two things to confirm: (a) 1,120 is PER MUG, not a pack;
+    // (b) the 'gifts' ladder gives 2 mugs 8% off. Intended for mugs?
+    'mugs': Product('mugs', Bi('Photo mug', 'የፎቶ ሙግ'), 0, 'gifts', [
+      PrintSize('mug-1', 'Photo mug', 1120),
     ]),
   };
 
@@ -133,10 +189,6 @@ class NorchaData {
     'books': [ // photo books — expensive, low volume
       Tier(1, 0), Tier(2, 8), Tier(5, 15),
     ],
-    // Mugs price by the pack, not by a percentage. Flat ladder keeps quote()
-    // honest for them and leaves this key free for small goods that are NOT
-    // pack-priced.
-    'mugs': [Tier(1, 0)],
     'gifts': [ // small goods that price per unit
       Tier(1, 0), Tier(2, 8), Tier(4, 15), Tier(12, 25),
     ],

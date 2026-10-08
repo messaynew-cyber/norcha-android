@@ -195,13 +195,12 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Text(L.t(eyebrowKey, lang).toUpperCase(),
-                  style: NorchaType.sectionLabel(c).copyWith(
-                    fontFamily: lang.isAmharic
-                        ? NorchaTypeFace.amharic
-                        : NorchaTypeFace.body,
-                    letterSpacing: lang.isAmharic ? 1.2 : 2.4,
-                  )),
+              Text(
+                  // `.toUpperCase()` is a no-op on Ethiopic — Amharic has no
+                  // case. Harmless, and clearer than branching for it.
+                  L.t(eyebrowKey, lang).toUpperCase(),
+                  style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)
+                      .copyWith(letterSpacing: lang.isAmharic ? 1.2 : 2.4)),
               const Spacer(),
               if (trailing != null) trailing!,
             ],

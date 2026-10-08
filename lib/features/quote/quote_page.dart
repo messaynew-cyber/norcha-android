@@ -573,12 +573,11 @@ class _TotalBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(L.t('quote.total', lang),
-                        style: NorchaType.sectionLabel(c).copyWith(
-                          fontFamily: lang.isAmharic
-                              ? NorchaTypeFace.amharic
-                              : NorchaTypeFace.body,
-                          letterSpacing: lang.isAmharic ? 1.2 : 2.4,
-                        )),
+                        // sectionLabel now picks the family itself; only the
+                        // tracking differs from its default here.
+                        style: NorchaType.sectionLabel(c,
+                                amharic: lang.isAmharic)
+                            .copyWith(letterSpacing: lang.isAmharic ? 1.2 : 2.4)),
                     const SizedBox(height: 2),
                     KineticNumber(
                       value: NorchaData.money(total),

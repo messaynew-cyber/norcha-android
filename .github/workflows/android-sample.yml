@@ -13,8 +13,10 @@ on:
   push:
     branches:
       - main
+      - pricing-real
       - 'theme-*'
       - 'phase1-*'
+      - 'phase2-*'
     paths-ignore:
       - '**.md'
 
