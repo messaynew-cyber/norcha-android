@@ -52,18 +52,36 @@ Widget _appUnderTest({required Widget child, required NorchaLang lang}) {
 /// it taken from the language table (so Ethiopic in Amharic), and Norcha's own
 /// InputDecoration. This is the shape that threw.
 Widget _norchaField(NorchaLang lang, {Key? key}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(L.t('order.phone', lang)),
-      const SizedBox(height: 8),
-      TextField(
-        key: key,
-        decoration: const InputDecoration(
-          hintText: 'NR-0000',
+  // 🔴 Material IS NOT OPTIONAL IN THE HARNESS EITHER.
+  // The first version of this test pumped the Column bare, and TextField
+  // threw "No Material widget found" — a harness bug that looked exactly
+  // like a product bug. In the real app every field sits inside
+  // PageScaffold, which is inside the MaterialApp's page route, so a
+  // Scaffold here is what makes the harness honest about the real tree.
+  return MaterialApp(
+    locale: Locale(lang.code),
+    supportedLocales: const [Locale('en'), Locale('am')],
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    home: Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(L.t('order.phone', lang)),
+            const SizedBox(height: 8),
+            TextField(
+              key: key,
+              decoration: const InputDecoration(hintText: 'NR-0000'),
+            ),
+          ],
         ),
       ),
-    ],
+    ),
   );
 }
 
@@ -71,12 +89,7 @@ void main() {
   group('TextField under an Amharic MaterialApp', () {
     testWidgets('English locale builds a field without throwing',
         (tester) async {
-      await tester.pumpWidget(
-        _appUnderTest(
-          lang: NorchaLang.en,
-          child: _norchaField(NorchaLang.en),
-        ),
-      );
+      await tester.pumpWidget(_norchaField(NorchaLang.en));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -86,12 +99,7 @@ void main() {
     testWidgets(
         '🔴 Amharic locale builds a field without throwing — the regression',
         (tester) async {
-      await tester.pumpWidget(
-        _appUnderTest(
-          lang: NorchaLang.am,
-          child: _norchaField(NorchaLang.am),
-        ),
-      );
+      await tester.pumpWidget(_norchaField(NorchaLang.am));
       // pumpAndSettle, not pump: the failure only surfaced after the
       // AnimatedBuilder inside TextField had built its decoration.
       await tester.pumpAndSettle();
@@ -137,9 +145,9 @@ void main() {
 
     testWidgets('switching en -> am at runtime keeps the field alive',
         (tester) async {
-      Widget build(NorchaLang l) => _appUnderTest(
-            lang: l,
-            child: _norchaField(l, key: ValueKey('order-field-${l.code}')),
+      Widget build(NorchaLang l) => _norchaField(
+            l,
+            key: ValueKey('order-field-${l.code}'),
           );
 
       await tester.pumpWidget(build(NorchaLang.en));
