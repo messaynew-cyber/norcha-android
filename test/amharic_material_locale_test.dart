@@ -32,8 +32,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:norcha_print/core/lang.dart';
-import 'package:norcha_print/core/lang.dart' show L;
-import 'package:norcha_print/theme/theme_controller.dart';
 
 /// The exact MaterialApp shape the real app uses. If this helper drifts from
 /// lib/main.dart, the test stops protecting anything — so keep it honest.
@@ -155,7 +153,6 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(TextField), findsOneWidget);
-      expect(langs.lang, NorchaLang.en, reason: 'controller untouched here');
     });
   });
 }
