@@ -75,6 +75,28 @@ class GhostNumeral extends StatelessWidget {
     this.size = 240,
   });
 
+  /// 🔴 THE NUMERAL STEPS DOWN ON A PHONE, EXACTLY AS IT DOES ON THE WEBSITE.
+  ///
+  /// style.css does this at max-width 640px:
+  ///
+  ///     .ghost-num { font-size: clamp(96px, 28vw, 170px); opacity: .2 }
+  ///
+  /// with the note that on a phone it "steps back rather than competing with
+  /// the copy", and that at 412px the glyph box was overflowing the viewport.
+  ///
+  /// The app had no equivalent, so a flat 250px numeral was drawn on a device
+  /// only ~400dp wide — proportionally far larger than the site's ~300px on a
+  /// desktop. A bigger glyph is not just bigger: at a fixed stroke ratio the
+  /// outline is proportionally heavier too, which is part of why the doubling
+  /// was so much more obvious in the app than on the web.
+  ///
+  /// 28% of the shorter side reproduces the site's 28vw, clamped to the same
+  /// 96-170 band.
+  static double sizeFor(BuildContext context) {
+    final shortest = MediaQuery.sizeOf(context).shortestSide;
+    return (shortest * 0.28).clamp(96.0, 170.0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = NorchaColors.of(context);
@@ -116,33 +138,39 @@ class GhostNumeral extends StatelessWidget {
                     text: numeral,
                     size: size,
                     colour: Brand.gold,
-                    // 🔴 A THIN, CONSTANT STROKE. THIS WAS A REGRESSION.
+                    // 🔴 THE STROKE IS A RATIO, AND THE RATIO IS 0.0065.
                     //
-                    // The stroke was changed from a fixed 1.6 to `size * 0.045`
-                    // (~11px at size 250) on the theory that a thicker stroke
-                    // would stop the outline reading as two copies. That
-                    // reasoning was wrong and it made the problem WORSE.
+                    // Copied from the WEBSITE, which is the reference
+                    // implementation and has always rendered this correctly:
                     //
-                    // Why: `strokeWidth` is centred on the glyph's CONTOUR, so
-                    // the stroke is drawn half inside and half outside the
-                    // letterform. When a stem is narrower than the stroke, the
-                    // glyph body is entirely swallowed and all that is left is
-                    // two widely separated hairlines — the doubling.
+                    //     feven-prints-v2/css/style.css
+                    //     .ghost-num--outline { -webkit-text-stroke: 1.7px }
                     //
-                    // The separation between those hairlines is
-                    // (stemWidth + strokeWidth), so increasing strokeWidth
-                    // increases the gap. At 11px against a ~30px stem that is
-                    // ~41px of white between two 11px lines: unmistakably two
-                    // shapes. At 1.6px it is ~32px, which the eye merges into
-                    // ONE outlined numeral — which is what the Architect saw
-                    // and approved before that change.
+                    // on a glyph of roughly 300px. 1.7 / 300 = 0.0057, and the
+                    // app draws at 240 rather than 300, so the equivalent
+                    // fraction is ~0.0065. At size 240 that lands on ~1.56 —
+                    // i.e. very close to the 1.6 this file used originally,
+                    // which is why it looked right the first time it shipped.
                     //
-                    // So: keep it thin, keep it constant. The number does not
-                    // need to scale with `size`; it needs to stay small relative
-                    // to a stem. If a future font ships thicker stems, re-measure
-                    // before touching this — see the note above about not
-                    // trusting reasoning over measurement.
-                    strokeWidth: 1.6,
+                    // ⚠️ THIS VALUE HAS BEEN WRONG TWICE, IN OPPOSITE DIRECTIONS
+                    //
+                    //   1.6    (0.67% of glyph)  -> correct, matched the website
+                    //   size * 0.045 (4.6%)      -> EIGHT TIMES too thick, broke it
+                    //
+                    // The second attempt argued that a thicker stroke would stop
+                    // the outline reading as two copies. It did the opposite.
+                    // `strokeWidth` is centred on the glyph CONTOUR, so half is
+                    // drawn inside the letterform: at 4.6% the stroke eats
+                    // through the thin strokes of the Ge'ez numeral and all that
+                    // survives is two parallel hairlines. That is the doubling.
+                    //
+                    // The lesson is not "keep it constant" — scaling with size
+                    // is right, because the app draws at 240 and the site at
+                    // 300. The lesson is that the RATIO must come from the
+                    // reference implementation, not from reasoning about it.
+                    // Two of the three numbers this line has held were invented.
+                    // This one was measured off the site that works.
+                    strokeWidth: size * 0.0065,
                   ),
           ),
         ),
@@ -210,6 +238,16 @@ class _StrokePainter extends CustomPainter {
           fontFamily: NorchaTypeFace.amharic,
           fontSize: size,
           height: 1.0,
+          // ⚠️ w600 IS A REAL FACE HERE, NOT A SYNTHESISED ONE.
+          // NotoSerifEthiopic.ttf is a variable font whose wght axis runs
+          // 100–900 with a default of 400, and pubspec declares 400/500/600/700
+          // against it. So this resolves to real interpolated outlines.
+          //
+          // If a future edit asks for a weight OUTSIDE that declared set, Flutter
+          // fakes it by smearing a second offset copy of the glyph — and on a
+          // STROKED outline a second offset copy is a second outline, i.e. the
+          // doubling this file has already been broken by twice. Any new weight
+          // must be added to pubspec.yaml's font list as well.
           fontWeight: FontWeight.w600,
           foreground: Paint()
             ..style = PaintingStyle.stroke
