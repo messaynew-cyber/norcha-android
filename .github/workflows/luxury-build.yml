@@ -160,68 +160,49 @@ jobs:
           draft: false
           prerelease: true
 
-      # ───────────────────────────────────────────────────────────────────────
-      # 🔴 MIRROR TO THE RELAY, BECAUSE GITHUB IS SLOW FROM ADDIS.
+      # 🔴 THE RELAY IS PUBLISHED BY HAND. THE AUTOMATION WAS DELETED ON PURPOSE.
       #
-      # Measured 2026-10-11 from the phone: a github.com release download ran at
-      # 17 KB/s — 53 minutes for one APK — while the same phone pulled 2.8 MB/s
-      # from Cloudflare and 3.8 MB/s from the relay on adwaaudit.com. GitHub is
-      # the bottleneck, not the connection. So the build publishes itself to
-      # somewhere fast and nobody waits, and nobody hand-copies an APK again.
+      # There WAS a "Mirror to the relay" step here. It was removed after costing
+      # far more than it saved, and every failure it produced was a BAD failure:
       #
-      # The relay serves https://adwaaudit.com/norcha/ from the adwa_frontend
-      # container's web root. It has its own README in /home/ubuntu/norcha-relay.
+      #   * `Permission denied (publickey)` for three runs, because
+      #     `-i <(printf ...)` hands ssh a /dev/fd/N path that ssh re-executes
+      #     itself out of. The symptom points at the key, so the key got
+      #     regenerated, reinstalled and re-sealed through PyNaCl — all wasted.
+      #     The key was correct the whole time.
       #
-      # ⚠️ REQUIRES THE SECRET `NORCHA_RELAY_KEY`. The step SKIPS cleanly when it
-      # is absent — a missing secret must never fail a build that otherwise
-      # produced a good APK. Silent skip, never silent failure.
-      - name: Mirror to the relay (adwaaudit.com/norcha)
-        # 🔴 THE GATE IS `is not a pull request`, NOT A BRANCH LIST.
-        #
-        # It used to name main and pricing-real explicitly, which meant the step
-        # SKIPPED on every other branch — and a skipped step is reported as a
-        # SUCCESS, so it looked like the mirror was working when it had never
-        # run once. That is the worst failure mode available: a green tick over
-        # nothing.
-        #
-        # Mirroring is harmless from any branch (it publishes an APK that was
-        # built and released by this same run), so the only real condition is
-        # that a key exists. `github.event_name != 'pull_request'` keeps fork PRs
-        # out, where secrets are unavailable anyway.
-        if: github.event_name != 'pull_request' && env.RELAY_KEY != ''
-        env:
-          RELAY_KEY: ${{ secrets.NORCHA_RELAY_KEY }}
-        run: |
-          set -euo pipefail
-          NAME="norcha-print-v${{ steps.ver.outputs.version }}-b${{ github.run_number }}.apk"
-          TAG="v${{ steps.ver.outputs.version }}-b${{ github.run_number }}"
-          echo "mirroring $NAME from $TAG"
-
-          # The relay pulls the file itself rather than the runner pushing it:
-          # the VPS is on a fast link and this avoids pushing 55MB back up out
-          # of a CI runner. It then regenerates its own index. Idempotent.
-          ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 \
-              -i <(printf '%s' "$RELAY_KEY") ubuntu@129.80.112.9 "
-                set -e
-                cd /home/ubuntu/norcha-relay
-                curl -sL --max-time 300 -o '$NAME' \
-                  'https://github.com/messaynew-cyber/norcha-android/releases/download/$TAG/norcha-luxury-${{ github.run_number }}.apk'
-                python3 generate_index.py
-                CT=\$(sudo docker ps -q --filter publish=80)
-                sudo docker cp '$NAME' \$CT:/usr/share/nginx/html/norcha/
-                sudo docker cp index.json \$CT:/usr/share/nginx/html/norcha/
-                echo MIRRORED '$NAME'
-              "
-
+      #   * It once wrote a NINE-BYTE body reading "Not Found" into a filename
+      #     ending .apk and published it to the LIVE download page, because
+      #     `curl -s` exits 0 on a 404 response. A green tick over a broken
+      #     artefact is the worst outcome available. It happened twice.
+      #
+      #   * Its `if:` gate named branches explicitly, so on every other branch it
+      #     SKIPPED — and GitHub reports a skipped step as SUCCESS. Three green
+      #     builds looked like it working when it had never executed once.
+      #
+      # WHAT REPLACED IT
+      # A manual publish that takes about twenty seconds and is VERIFIABLE by
+      # looking at the file that landed. The release asset stays the source of
+      # truth; the relay is a copy. Exact commands: HANDOVER.md section 4.
+      #
+      # The rule worth keeping: an automation whose failure mode is a GREEN TICK
+      # is worse than a manual step whose failure mode is obvious. This one also
+      # only runs when someone actually wants an APK, which is rarely.
+      #
+      # ⚠️ NORCHA_RELAY_KEY is now UNUSED and can be deleted from repo secrets.
       - name: Where to download it
-        # Same reasoning as the mirror gate: a skipped step reports as success,
-        # so a branch list here just hides the summary on working branches.
-        if: always() && github.event_name != 'pull_request'
+        # `always()` with NO branch condition. A skipped step is reported as
+        # SUCCESS, and a branch list here is how the old mirror step hid three
+        # consecutive failures behind green ticks.
+        if: always()
         run: |
           {
             echo "### Downloads"
             echo ""
-            echo "- **Fast (relay):** https://adwaaudit.com/norcha/"
-            echo "- Release: \`v${{ steps.ver.outputs.version }}-b${{ github.run_number }}\`"
+            echo "- **Release (source of truth):** \`v${{ steps.ver.outputs.version }}-b${{ github.run_number }}\`"
+            echo "- **Fast mirror:** https://adwaaudit.com/norcha/  — *published BY HAND, see HANDOVER.md section 4*"
             echo "- Version stamped into the APK: \`${{ steps.ver.outputs.stamp }}\`"
+            echo ""
+            echo "CI does not publish to the relay. Publishing is 3 commands and"
+            echo "about 20 seconds, and unlike the removed automation it is verifiable."
           } >> "$GITHUB_STEP_SUMMARY"

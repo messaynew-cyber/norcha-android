@@ -83,6 +83,14 @@ workflow is a list that rots.
 The bottleneck is GitHub, **not** the connection. The phone pulled 8 MB from Cloudflare in
 2.9 seconds while GitHub crawled.
 
+### 🔴 HOW AN APK ACTUALLY REACHES THE PHONE
+
+**Not through CI.** The build publishes a GitHub Release; someone then copies the APK to
+the relay **by hand**. See §5 — the automation was deleted on purpose, with reasons.
+
+The phone cannot download from github.com. Measured 2026-10-11: **17 KB/s**, which is
+**53 minutes for one APK**. The relay does the same file in **~15 seconds**.
+
 ### The relay
 
 - **https://adwaaudit.com/norcha/** — a build index page, one card per APK, newest first
@@ -93,18 +101,25 @@ The bottleneck is GitHub, **not** the connection. The phone pulled 8 MB from Clo
 - `generate_index.py` scans the directory and writes `index.json` + a `.sha256` per build.
   The page reads that, so **it cannot lie about what is on disk.**
 
-### Adding a build by hand (if CI mirroring is off)
+### Adding a build — this is the ONLY way, and it is manual
+
+Full walkthrough with the safety checks in **§5**. Short version:
 
 ```bash
 cd /home/ubuntu/norcha-relay
-curl -sL -o norcha-print-vX.Y.Z-bNN.apk "<release asset url>"
+NAME="norcha-print-vX.Y.Z-bNN.apk"
+curl -fsSL -o "$NAME" "<release asset url>"     # -f so a 404 FAILS
+[ "$(stat -c %s "$NAME")" -gt 1000000 ] || exit 1   # never publish a stub
 python3 generate_index.py
 CT=$(sudo docker ps -q --filter publish=80)
-sudo docker cp norcha-print-vX.Y.Z-bNN.apk $CT:/usr/share/nginx/html/norcha/
-sudo docker cp index.json $CT:/usr/share/nginx/html/norcha/
+sudo docker cp "$NAME" "$CT":/usr/share/nginx/html/norcha/
+sudo docker cp "$NAME.sha256" "$CT":/usr/share/nginx/html/norcha/
+sudo docker cp index.json "$CT":/usr/share/nginx/html/norcha/
 ```
 
-CI now does this automatically — see §5.
+**CI does NOT do this.** It used to try; it was removed after publishing a 9-byte
+`Not Found` body to the live page and reporting green while skipping. **§5 explains why
+not to bring it back.**
 
 ---
 
@@ -128,14 +143,69 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1/        # expect 200
 curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1/tobia/  # expect 200
 ```
 
-### CI mirroring
+### 🔴 PUBLISHING IS MANUAL, AND THAT IS DELIBERATE
 
-`luxury-build.yml` has a **"Mirror to the relay"** step that SSHes to the VPS, pulls the
-release, regenerates the index and copies it in. It needs the repo secret
-**`NORCHA_RELAY_KEY`** (an SSH private key for `ubuntu@129.80.112.9`).
+There **was** a `Mirror to the relay` CI step. It was **deleted on 2026-10-11** after
+costing far more than it saved. **Do not reintroduce it** without reading this first.
 
-If that secret is absent the step **skips cleanly** — a missing secret must never fail a
-build that produced a good APK. If downloads are stale, check the secret first.
+It failed in three different ways, and every one was a *bad* failure:
+
+1. **`Permission denied (publickey)` for three runs.** The cause was
+   `-i <(printf '%s' "$RELAY_KEY")` — process substitution gives ssh a `/dev/fd/N`
+   path, and ssh re-executes itself *before* it opens the identity file, so the
+   descriptor is gone. **The symptom points at the key**, so the key was regenerated,
+   reinstalled and re-sealed through PyNaCl — all wasted. The key was correct the
+   whole time.
+2. **It published a 9-byte file called `Not Found` to the live page.** `curl -s`
+   exits 0 on a 404, so a failed download looked like success and got indexed as a
+   build. **It happened twice.**
+3. **It reported green while never running.** Its `if:` gate named branches
+   explicitly, so on other branches the step **skipped** — and GitHub reports a
+   skipped step as **SUCCESS**. Three green builds looked like the mirror working
+   when it had never executed once.
+
+> **The rule: an automation whose failure mode is a green tick is worse than a
+> manual step whose failure mode is obvious.** The manual step also only runs when
+> someone actually wants an APK, which is rare.
+
+**`NORCHA_RELAY_KEY` is now unused** and can be deleted from repo secrets. The CI
+pubkey is still in `/home/ubuntu/.ssh/authorized_keys` (comment `norcha-ci-relay`)
+and can go too.
+
+### Publishing a build by hand — ~20 seconds
+
+```bash
+ssh ubuntu@129.80.112.9
+
+cd /home/ubuntu/norcha-relay
+NAME="norcha-print-vX.Y.Z-bNN.apk"
+
+# 1. fetch it (use -f, so a 404 FAILS instead of writing "Not Found")
+curl -fsSL -o "$NAME" \
+  "https://github.com/messaynew-cyber/norcha-android/releases/download/vX.Y.Z-bNN/norcha-luxury-NN.apk"
+
+# 2. ALWAYS check the size before publishing. This is the check that was missing.
+ls -l "$NAME"                       # must be ~55 MB
+[ "$(stat -c %s "$NAME")" -gt 1000000 ] || { echo "TOO SMALL — abort"; exit 1; }
+
+# 3. regenerate the index (refuses anything under 1 MB as of 2026-10-11)
+python3 generate_index.py
+
+# 4. copy into the live container
+CT=$(sudo docker ps -q --filter publish=80)
+sudo docker cp "$NAME" "$CT":/usr/share/nginx/html/norcha/
+sudo docker cp "$NAME.sha256" "$CT":/usr/share/nginx/html/norcha/
+sudo docker cp index.json "$CT":/usr/share/nginx/html/norcha/
+
+# 5. VERIFY — look at the destination, never the tool's exit code
+sudo docker exec "$CT" ls -la /usr/share/nginx/html/norcha/
+```
+
+Then confirm from outside: `https://adwaaudit.com/norcha/`
+
+`generate_index.py` now has a **`MIN_APK_BYTES` floor of 1 MB** and prints
+`REFUSED <name>` for anything smaller, so a truncated download or an error body can
+never be indexed again.
 
 ---
 
@@ -171,58 +241,106 @@ instrument has no business over a shop counter's quote.
 `PlatformDispatcher.instance.onError` all still run. Silencing the overlay is a UI
 decision and must never silence the record. Two tests guard exactly that.
 
-### 6c. Ghost numeral doubling — `strokeWidth`
+### 6c. Ghost numeral doubling — TWO bugs, and I changed the wrong one four times
 
-**My regression, and I got it wrong three times.**
+Reported: the Ge'ez ghost numerals on **Quote, Order and Studio** looked **doubled**.
+Home and Upload were fine — because those three pages are `GhostStyle.outline` and the
+other two are `GhostStyle.soft`, which is a plain `Text` with a colour and **no stroke
+at all**. That split was the diagnosis.
+
+**I then made four attempts, and every one changed the wrong variable.**
+
+#### The bug I could see: the stroke
 
 `strokeWidth` is centred on the glyph's **contour**, so half is drawn *inside* the
-letterform. The story:
+letterform. Too thick and it eats through the thin strokes of a Ge'ez numeral, leaving
+two parallel hairlines.
 
-| | stroke | % of glyph | |
-|---|---|---|---|
-| website `style.css` (`-webkit-text-stroke: 1.7px` on ~300px) | 1.7 | 0.57% | ✅ |
-| app, originally | 1.6 on 240 | 0.67% | ✅ |
-| **attempt 1 — `size * 0.045`** | 10.8 | **4.50%** | ❌ 8× too thick |
-| **attempt 2 — fixed `1.6`, asserting it must not scale** | 1.6 | 0.67% | ✅ but for the wrong reason |
-| **now — `size * 0.0065`** | 1.6 on 240 | 0.65% | ✅ ratio from the website |
+| attempt | stroke | result |
+|---|---|---|
+| original | `1.6` flat | ✅ (what the Architect approved) |
+| mine #1 | `size * 0.045` (~10.8px, **4.5%**) | ❌ 8× too thick |
+| mine #2 | `1.6` flat again, "must not scale" | ✅ but for the wrong reason |
+| mine #3 | `size * 0.0065` (~1.6px, 0.65%), copied from the website's `-webkit-text-stroke: 1.7px` on ~300px | ✅ ratio correct |
+| **now** | **`1.6` flat** | ✅ **the original** |
 
-Only `GhostStyle.outline` pages doubled (Quote, Order, Studio). Home and Upload are
-`GhostStyle.soft` — a plain `Text` with a colour and no stroke — and were fine. **That
-split was the diagnosis.**
+#### The bug I could NOT see, and it was the important one
 
-**Attempt 3 was almost a disaster:** a comment about synthesised bold led to the conclusion
-that the font was smearing a second glyph. **False.** `NotoSerifEthiopic.ttf` is a variable
-font with a real `wght` axis **100→900**; `w600` is a genuine interpolated face. Caught by
-reading the `fvar` table instead of trusting the comment.
+**The painter had been replaced** — silently, in commit `1738555`, a commit about a
+regex migration. Its own message says why:
 
-Also copied the website's phone step-down: `28vw` clamped to `96–170px` → **110px** on a
-393dp screen, replacing a flat `250`. A numeral sized for desktop is proportionally far
-larger on a phone, and at a fixed ratio proportionally heavier — which is why the doubling
-was more obvious in the app than on the web.
+> `ghost_numerals: InlineSpan has no .lines.`
+
+`TextPainter.text` returns an `InlineSpan`, which has **no `.lines` property**. The
+path-based implementation **could not compile.** It was never a working option someone
+preferred — it was broken code that had to be replaced by a `foreground` Paint stroke.
+
+**So "the original" and the original in the repo are different artefacts**, and a stroke
+on a text foreground ≠ a stroke on an extracted glyph path. Every "revert to 1.6" I did
+changed the number while the mechanism stayed different.
+
+#### The actual visible regression: I shrank the numeral
+
+I added `GhostNumeral.sizeFor()` — clamping to `28vw` / 96–170px, i.e. **~110px on a
+393dp phone, down from a flat 250.** I got it by porting the website's
+`@media (max-width: 640px)` rule, which is right for a **web** layout and wrong here.
+
+**At 110px, a composition tuned for 250px is a different ornament** — smaller, sitting
+where the copy lives instead of behind it. **No stroke value could fix that**, which is
+why tuning the stroke four times changed nothing.
+
+#### Current state
+
+| | value |
+|---|---|
+| `strokeWidth` | **`1.6`** — flat, the original |
+| `size` | **`250`** — flat, the original |
+| `sizeFor()` | **removed** |
+| painter | `foreground` Paint — **kept**, the only version that compiles |
+
+The file is byte-identical to the approved version **except the painter**, and that one
+difference is forced.
+
+> ### 🔴 THE RULE THIS EARNED
+> When something is reported as *"it used to be right"*, **diff the WHOLE artefact**
+> against the version they approved — **not the one line you happen to be thinking
+> about.** I compared stroke numbers four times and never once compared the geometry.
+> The geometry was the regression.
+
+**Still unconfirmed visually.** If it is *still* doubled, the painter is the suspect,
+and the fix is rebuilding the path-based stroke **correctly** (glyph outlines from the
+font, not `InlineSpan.lines`) rather than reverting to code that had a compile error.
 
 > **Weight warning:** pubspec declares only 400/500/600/700. Requesting a weight outside
-> that set — even one inside the font's real axis — **will** synthesise, and on a stroked
-> outline a synthesised copy is a *second outline*. Add the weight to `pubspec.yaml` too.
+> that set — even one inside the font's real `wght` axis (100–900) — **will** synthesise,
+> and on a stroked outline a synthesised copy is *a second outline*. Add it to
+> `pubspec.yaml` too.
 
 ---
 
 ## 7. OPEN ITEMS
 
 1. **`main` is stale.** 40+ commits behind `pricing-real`. Anyone landing on the repo —
-   including a future me — sees a dead project. **This is the biggest remaining risk of
-   confusion.** A fast-forward merge fixes it.
+   including a future me — sees a dead project. **Biggest remaining risk of confusion.**
+   A fast-forward merge fixes it.
 2. **Signing key.** Every build uses a freshly generated Android **debug** key, so
    **install-over-old always fails with a signature mismatch** and the user must uninstall
    first. Needs one persistent keystore + CI secret. **Every install instruction currently
-   has to say "uninstall first", which is not shippable.**
+   says "uninstall first", which is not shippable.**
 3. **`prints` prices are placeholders.** `lib/core/pricing.dart` keeps a `prints` family
    flagged `THE PRICE IS NOT REAL` — it survives only because it is the *default selection*
    in quote and upload, so deleting it crashes both pages. **Blocked on Feven's price
-   sheet.** The rest of the pricing is real, sourced from the shop's own Price List 1/2.
-4. **Never visually confirmed.** Every fix this session was verified by tests, by CI, and
-   by matching a measured value from working production code — **never by looking at the
-   rendered app.** If the numeral doubling persists, get a screenshot of the Quote page
-   watermark before touching the code again.
+   sheet.** The rest of the pricing is real, from the shop's own Price List 1/2.
+4. **Never visually confirmed.** Every fix in this whole session was verified by tests, by
+   CI, and by matching a measured value from working production code — **never by looking
+   at the rendered app.** Four numeral attempts happened without anyone seeing the numeral.
+   **Get a screenshot before touching that code again.**
+5. **PR #6 (`fix/relay-identity-file`) is now moot** — superseded by deleting the mirror
+   step. Close it.
+6. **`NORCHA_RELAY_KEY` secret is unused.** Delete it, and the `norcha-ci-relay` line from
+   the VPS `authorized_keys`.
+
+---
 
 ---
 
