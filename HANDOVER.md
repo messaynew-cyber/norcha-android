@@ -2,12 +2,46 @@
 
 **For: whoever picks this up next. Most likely me, with no memory of writing it.**
 
+---
+
+## ⏱️ CURRENT STATE — 2026-10-11, end of session
+
+**Where the app is:** `pricing-real` @ `0a43e67`. Live download page
+**https://adwaaudit.com/norcha/** serving **`0.5.0-b56`**. Luxury Build green.
+
+**What was solved this session:**
+- ✅ **Amharic grey screen** — root cause was missing `localizationsDelegates` (§6a)
+- ✅ **Diagnostic banner removed** from the screen, recording kept (§6b)
+- ✅ **Relay built** at `adwaaudit.com/norcha/` — GitHub is 17 KB/s from Addis, the
+  relay does 4 MB/s (§4)
+- ✅ **Relay auto-publish DELETED** after it published a 9-byte `Not Found` to the
+  live page and reported green while skipping (§5)
+
+**What is NOT solved:**
+- 🔴 **The ghost numerals.** Six attempts, no visible change, and the b56 result
+  proves the edited code path is probably not what draws it. **§6c. Start there.**
+- ⚠️ `main` is stale. ⚠️ Debug signing key. ⚠️ `prints` prices still placeholders.
+
+**Next action, in order:**
+1. Read **§6c** — the numerals. Do not adjust a stroke value.
+2. Get a **screenshot of the Quote page (፪) watermark**, or answer *"what code paints
+   that mark?"*. That has never been established.
+3. Then everything else in §7.
+
+---
+
 Last updated: 2026-10-11, end of the session that fixed the grey screen, killed the
 diagnostic banner, and moved the build off GitHub's slow pipe.
 
 ---
 
 ## 0. Read this first
+
+> ### 🔴 IF YOU ARE HERE FOR THE GHOST NUMERALS — READ §6c FIRST
+> Six attempts have been made and **none of them produced a visible change**. The
+> evidence now says the code path being edited is **not the one drawing the artefact**.
+> **Do not adjust a stroke value.** Go straight to §6c.
+
 
 The single most useful habit on this repo: **read the file header before changing the
 file.** Every non-obvious decision is documented where it was made, in prose, with
@@ -241,104 +275,101 @@ instrument has no business over a shop counter's quote.
 `PlatformDispatcher.instance.onError` all still run. Silencing the overlay is a UI
 decision and must never silence the record. Two tests guard exactly that.
 
-### 6c. Ghost numeral doubling — TWO bugs, and I changed the wrong one four times
+### 6c. Ghost numeral doubling — 🔴 UNRESOLVED. START HERE.
 
-Reported: the Ge'ez ghost numerals on **Quote, Order and Studio** looked **doubled**.
-Home and Upload were fine — because those three pages are `GhostStyle.outline` and the
-other two are `GhostStyle.soft`, which is a plain `Text` with a colour and **no stroke
-at all**. That split was the diagnosis.
+**Status: OPEN. Six attempts, no visible change. The next session must NOT begin by
+adjusting a stroke value.**
 
-**I then made four attempts, and every one changed the wrong variable.**
+#### Evidence — the one fact that matters
 
-#### The bug I could see: the stroke
+| build | `size` | `strokeWidth` | Architect sees |
+|---|---|---|---|
+| b41 | `sizeFor()` ≈ **110px** | `0.0065` ratio | doubled |
+| **b56** | **`250`** | **`1.6` flat** | **doubled — no change** |
 
-`strokeWidth` is centred on the glyph's **contour**, so half is drawn *inside* the
-letterform. Too thick and it eats through the thin strokes of a Ge'ez numeral, leaving
-two parallel hairlines.
+**b56 was verified at commit `5d5043d`: `size: 250`, `strokeWidth: 1.6`. It shipped.**
 
-| attempt | stroke | result |
-|---|---|---|
-| original | `1.6` flat | ✅ (what the Architect approved) |
-| mine #1 | `size * 0.045` (~10.8px, **4.5%**) | ❌ 8× too thick |
-| mine #2 | `1.6` flat again, "must not scale" | ✅ but for the wrong reason |
-| mine #3 | `size * 0.0065` (~1.6px, 0.65%), copied from the website's `-webkit-text-stroke: 1.7px` on ~300px | ✅ ratio correct |
-| **now** | **`1.6` flat** | ✅ **the original** |
+So **doubling the numeral and changing the stroke by ~4× produced NO visible
+difference.** That is decisive: **the code path being edited is not the one drawing
+what the Architect sees.**
 
-#### The bug I could NOT see, and it was the important one
+#### What has been tried (all inside `GhostNumeral` — do not repeat)
 
-**The painter had been replaced** — silently, in commit `1738555`, a commit about a
-regex migration. Its own message says why:
+1. `size * 0.045` (4.5% of glyph) — made it **worse**
+2. flat `1.6` again, on the theory it must not scale
+3. `size * 0.0065` — ratio taken from `feven-prints-v2/css/style.css`
+   `-webkit-text-stroke: 1.7px` on a ~300px glyph (0.57%)
+4. added `sizeFor()` — `28vw` clamped 96–170, i.e. ~110px on a 393dp phone
+5. restored flat `1.6` **and** flat `250`, removed `sizeFor()` entirely
+6. shipped all of the above — **no visible change**
 
-> `ghost_numerals: InlineSpan has no .lines.`
+#### 🔴 WHERE TO LOOK NEXT (not stroke values)
 
-`TextPainter.text` returns an `InlineSpan`, which has **no `.lines` property**. The
-path-based implementation **could not compile.** It was never a working option someone
-preferred — it was broken code that had to be replaced by a `foreground` Paint stroke.
+- **There may be a SECOND numeral/watermark.** Grep the whole `lib/` for every element
+  that could paint a glyph at ornament scale. Candidates not yet examined:
+  `telafi` (Home and Studio pass `telafi: true`), the `stamp` element, `_Header`,
+  `lib/widgets/cloth_surface.dart`, `lib/widgets/ethiopian.dart`,
+  `lib/widgets/loading_mark.dart`, `lib/widgets/kinetic_number.dart`.
+- **`_StrokedText` may be clipped or not painting.** It builds
+  `CustomPaint(size: Size(size * 0.85, size * 0.9))` inside
+  `SizedBox(height: 320)` inside a `Stack` inside a `Positioned`. **Confirm what
+  actually paints.**
+- **The `outline`/`soft` split is still the strongest clue** — Quote/Order/Studio
+  (outline) double; Home/Upload (soft) are fine. That points at a stroke path — but
+  possibly **a different stroke** from the one being edited.
+- **The painter was replaced in `1738555`** because the original path-based version
+  **could not compile** (`InlineSpan has no .lines`). The rendering painter today is
+  the `foreground` Paint one. If something *else* also draws an outline, there are
+  two stroke paths and only one has been touched.
 
-**So "the original" and the original in the repo are different artefacts**, and a stroke
-on a text foreground ≠ a stroke on an extracted glyph path. Every "revert to 1.6" I did
-changed the number while the mechanism stayed different.
+#### 🔴 THE DISCIPLINE RULE FOR THIS BUG
 
-#### The actual visible regression: I shrank the numeral
+**DO NOT make a seventh blind value change.** Six builds were pushed to the Architect
+to test without ever confirming **which code path draws the artefact**. Get either:
 
-I added `GhostNumeral.sizeFor()` — clamping to `28vw` / 96–170px, i.e. **~110px on a
-393dp phone, down from a flat 250.** I got it by porting the website's
-`@media (max-width: 640px)` rule, which is right for a **web** layout and wrong here.
+- a **screenshot of the Quote page (chapter 2, ፪) watermark** — we have never actually
+  looked at the doubled thing, or
+- a **code answer**: which widget paints that mark
 
-**At 110px, a composition tuned for 250px is a different ornament** — smaller, sitting
-where the copy lives instead of behind it. **No stroke value could fix that**, which is
-why tuning the stroke four times changed nothing.
+**Verify the target before tuning it.** That rule applies to every bug in this repo.
 
-#### Current state
+#### Salvaged from the attempts (keep these)
 
-| | value |
-|---|---|
-| `strokeWidth` | **`1.6`** — flat, the original |
-| `size` | **`250`** — flat, the original |
-| `sizeFor()` | **removed** |
-| painter | `foreground` Paint — **kept**, the only version that compiles |
-
-The file is byte-identical to the approved version **except the painter**, and that one
-difference is forced.
-
-> ### 🔴 THE RULE THIS EARNED
-> When something is reported as *"it used to be right"*, **diff the WHOLE artefact**
-> against the version they approved — **not the one line you happen to be thinking
-> about.** I compared stroke numbers four times and never once compared the geometry.
-> The geometry was the regression.
-
-**Still unconfirmed visually.** If it is *still* doubled, the painter is the suspect,
-and the fix is rebuilding the path-based stroke **correctly** (glyph outlines from the
-font, not `InlineSpan.lines`) rather than reverting to code that had a compile error.
-
-> **Weight warning:** pubspec declares only 400/500/600/700. Requesting a weight outside
-> that set — even one inside the font's real `wght` axis (100–900) — **will** synthesise,
-> and on a stroked outline a synthesised copy is *a second outline*. Add it to
-> `pubspec.yaml` too.
+- `strokeWidth` is centred on the glyph's **contour**, so half is drawn *inside* the
+  letterform. Around **0.57–0.67% of the glyph size** is the range the website uses
+  (`1.7px` on ~300px) and the app's original (`1.6` on 240).
+- The website's `@media (max-width: 640px)` clamp (`28vw`, 96–170px) is a **web**
+  layout rule. Applying it to the app is what `sizeFor()` did — **reverted, and
+  should stay reverted** unless measurement says otherwise.
+- **Any weight outside pubspec's declared 400/500/600/700 will synthesise**, and a
+  synthesised copy of a *stroked* outline is *a second outline*. The font's real
+  `wght` axis is 100–900, so `w600` is genuine — but a new weight must be added to
+  `pubspec.yaml` too.
 
 ---
 
 ## 7. OPEN ITEMS
 
-1. **`main` is stale.** 40+ commits behind `pricing-real`. Anyone landing on the repo —
-   including a future me — sees a dead project. **Biggest remaining risk of confusion.**
-   A fast-forward merge fixes it.
-2. **Signing key.** Every build uses a freshly generated Android **debug** key, so
-   **install-over-old always fails with a signature mismatch** and the user must uninstall
-   first. Needs one persistent keystore + CI secret. **Every install instruction currently
-   says "uninstall first", which is not shippable.**
-3. **`prints` prices are placeholders.** `lib/core/pricing.dart` keeps a `prints` family
-   flagged `THE PRICE IS NOT REAL` — it survives only because it is the *default selection*
-   in quote and upload, so deleting it crashes both pages. **Blocked on Feven's price
-   sheet.** The rest of the pricing is real, from the shop's own Price List 1/2.
-4. **Never visually confirmed.** Every fix in this whole session was verified by tests, by
-   CI, and by matching a measured value from working production code — **never by looking
-   at the rendered app.** Four numeral attempts happened without anyone seeing the numeral.
-   **Get a screenshot before touching that code again.**
-5. **PR #6 (`fix/relay-identity-file`) is now moot** — superseded by deleting the mirror
-   step. Close it.
-6. **`NORCHA_RELAY_KEY` secret is unused.** Delete it, and the `norcha-ci-relay` line from
-   the VPS `authorized_keys`.
+1. **🔴 THE GHOST NUMERALS ARE UNRESOLVED AND ARE THE #1 ITEM.** Six attempts, no
+   visible change, and b56 proved the edited code path is probably not drawing it.
+   **See §6c before touching anything.** The next action is a **screenshot** or a
+   **code answer to "what paints that mark"** — not another value change.
+2. **`main` is stale.** 40+ commits behind `pricing-real`. Anyone landing on the repo —
+   including a future me — sees a dead project. A fast-forward merge fixes it.
+3. **Signing key.** Every build uses a freshly generated Android **debug** key, so
+   **install-over-old always fails** with a signature mismatch and the user must
+   uninstall first. Needs one persistent keystore + CI secret. **Every install
+   instruction currently says "uninstall first", which is not shippable.**
+4. **`prints` prices are placeholders.** `lib/core/pricing.dart` keeps a `prints` family
+   flagged `THE PRICE IS NOT REAL` — it survives only because it is the *default
+   selection* in quote and upload, so deleting it crashes both pages. **Blocked on
+   Feven's price sheet.** The rest of the pricing is real, from the shop's own
+   Price List 1/2.
+5. **`Norcha Sample APK` workflow is red** on `pricing-real` pushes. It does not produce
+   anything that ships (the Luxury Build is the one that matters, and it is green).
+   Either fix or disable — it is noise otherwise.
+6. **`NORCHA_RELAY_KEY` secret is unused** and can be deleted. Same for the
+   `norcha-ci-relay` line in the VPS `authorized_keys`.
 
 ---
 
