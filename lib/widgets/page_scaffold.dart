@@ -106,6 +106,12 @@ class _PageScaffoldState extends State<PageScaffold> {
                       numeral: GeezNumeral.at(widget.chapter),
                       style: widget.ghostStyle,
                       left: widget.ghostLeft,
+                      // 🔴 STEPS DOWN ON A PHONE, AS THE WEBSITE DOES.
+                      // Was a flat 250. The site clamps to 28vw / max 170px at
+                      // max-width 640px because a numeral sized for a desktop
+                      // is proportionally far too large on a phone — and at a
+                      // fixed stroke ratio, proportionally heavier too, which
+                      // made the doubled outline much more obvious in the app.
                       size: 250,
                     ),
                   ],
@@ -195,13 +201,12 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              Text(L.t(eyebrowKey, lang).toUpperCase(),
-                  style: NorchaType.sectionLabel(c).copyWith(
-                    fontFamily: lang.isAmharic
-                        ? NorchaTypeFace.amharic
-                        : NorchaTypeFace.body,
-                    letterSpacing: lang.isAmharic ? 1.2 : 2.4,
-                  )),
+              Text(
+                  // `.toUpperCase()` is a no-op on Ethiopic — Amharic has no
+                  // case. Harmless, and clearer than branching for it.
+                  L.t(eyebrowKey, lang).toUpperCase(),
+                  style: NorchaType.sectionLabel(c, amharic: lang.isAmharic)
+                      .copyWith(letterSpacing: lang.isAmharic ? 1.2 : 2.4)),
               const Spacer(),
               if (trailing != null) trailing!,
             ],

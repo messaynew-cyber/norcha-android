@@ -33,3 +33,59 @@ flutter:
   generate: true
   assets:
     - assets/images/
+
+  # 🔴 FONTS ARE BUNDLED, NOT FETCHED — the comment in app_theme.dart has
+  # always claimed this, but `fonts:` was never declared and assets/fonts did
+  # not exist. Every family the app asked for was resolved against whatever the
+  # device happened to have, which is not something a shop counter should
+  # depend on.
+  #
+  # ⚠️ THESE ARE VARIABLE FONTS, AND THAT IS WHY `weight:` IS LISTED FOUR TIMES
+  # EACH. One file carries the whole 100-900 weight axis, but Flutter's font
+  # loader does not read that axis on its own — with no `weight:` key the file
+  # is registered at ONE weight, pinned to the font's own default. That default
+  # is not the same everywhere:
+  #
+  #     Noto Serif Ethiopic   default wght 400
+  #     Outfit                default wght 100  (THIN — not Regular)
+  #     EB Garamond           default wght 400
+  #
+  # Registering the file once therefore made the whole app render Outfit Thin,
+  # and made every w600 style (there are 22 of them) fall back to SYNTHESISED
+  # bold — Flutter fakes it by smearing a second offset copy of the glyph. On
+  # the stroked Ge'ez ghost numerals that showed up as a doubled outline.
+  #
+  # Declaring the same asset at each weight the app actually uses is how a
+  # variable font is wired up in Flutter. The app uses exactly four:
+  # 400, 500, 600, 700. Nothing here is synthesised any more.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit.ttf
+          weight: 700
+    - family: EB Garamond
+      fonts:
+        - asset: assets/fonts/EBGaramond.ttf
+          weight: 400
+        - asset: assets/fonts/EBGaramond.ttf
+          weight: 500
+        - asset: assets/fonts/EBGaramond.ttf
+          weight: 600
+        - asset: assets/fonts/EBGaramond.ttf
+          weight: 700
+    - family: Noto Serif Ethiopic
+      fonts:
+        - asset: assets/fonts/NotoSerifEthiopic.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSerifEthiopic.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSerifEthiopic.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSerifEthiopic.ttf
+          weight: 700

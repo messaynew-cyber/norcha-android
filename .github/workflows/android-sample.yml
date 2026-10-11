@@ -13,8 +13,14 @@ on:
   push:
     branches:
       - main
-      - 'theme-*'
-      - 'phase1-*'
+      - pricing-real
+      # Any working branch — see the note in test.yml. Enumerated lists rot.
+      - 'fix-*'
+      - 'fix/**'
+      - 'phase*'
+      - 'theme*'
+      - 'feat-*'
+      - 'feat/**'
     paths-ignore:
       - '**.md'
 
@@ -65,6 +71,13 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: norcha-apk-${{ github.ref_name }}
+          # 🔴 github.ref_name CONTAINS A SLASH ON BRANCHES LIKE fix/foo, AND
+          # upload-artifact REJECTS IT:
+          #   "The artifact name is not valid: norcha-apk-fix/relay-identity-file.
+          #    Contains the following character: Forward slash /"
+          # That failed the whole sample build on every slash-branch. Slashes are
+          # replaced rather than stripped so two branches cannot collide on one
+          # artifact name.
+          name: norcha-apk-${{ replace(github.ref_name, '/', '-') }}
           path: out/*.apk
           retention-days: 30

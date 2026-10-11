@@ -218,6 +218,18 @@ class Corners {
 /// single most visible way an app can look cheap, and it happens exactly when
 /// the customer is standing in front of you. The fonts are in assets/fonts and
 /// referenced directly.
+///
+/// ⚠️ THIS COMMENT USED TO BE A LIE. It said the fonts were in assets/fonts;
+/// the directory did not exist and pubspec.yaml declared no `fonts:` section.
+/// Every family below was therefore resolved against the device's own fonts,
+/// and `google_fonts` — though listed as a dependency — was never called once.
+/// Now declared properly in pubspec.yaml and shipped in assets/fonts.
+///
+/// 🔴 ETHIOPIC NEEDS MORE LINE HEIGHT THAN LATIN. Measured from the actual
+/// files: Noto Serif Ethiopic has ascent 1069 / descent -293 (upm 1000), so it
+/// needs 1.362 em; Outfit needs 1.260. Any style that can carry Amharic text
+/// must leave room for this, or Ethiopic glyphs overflow a box that Latin
+/// fits — which is what broke the Order and Upload pages in Amharic only.
 class NorchaTypeFace {
   /// Display serif. Numbers and headlines. A price set large in a serif reads
   /// as worth something; the same price in sans reads as data entry.
@@ -252,10 +264,28 @@ class NorchaType {
   );
 
   /// Small caps label. Positive tracking — the only place tracking goes up.
-  static TextStyle sectionLabel(NorchaColors c) => TextStyle(
-    fontFamily: NorchaTypeFace.body, fontSize: 10.5, height: 1.0,
-    fontWeight: FontWeight.w600, letterSpacing: 2.4, color: c.inkFaint,
-  );
+  ///
+  /// 🔴 height WAS 1.0, AND IT MUST NOT GO BACK.
+  /// These labels sit above text fields and take their content from the
+  /// language table, so in Amharic they are Ethiopic script. Measured from the
+  /// actual font files: Noto Serif Ethiopic needs 1.362 em of line
+  /// (ascent 1069, descent -293, upm 1000) where Outfit needs 1.260. At
+  /// height 1.0 the glyphs are TALLER THAN THEIR LINE BOX — Ethiopic overflows
+  /// a box that Latin fits, which is why the Order and Upload pages broke only
+  /// in Amharic. 1.45 clears the tallest script in the app comfortably.
+  ///
+  /// The family is also no longer hardcoded to the Latin face: `forText`
+  /// below picks the script-appropriate family so Ethiopic renders in a real
+  /// Ethiopic face rather than a mismatched fallback.
+  static TextStyle sectionLabel(NorchaColors c, {bool amharic = false}) =>
+      TextStyle(
+        fontFamily: amharic ? NorchaTypeFace.amharic : NorchaTypeFace.body,
+        fontSize: amharic ? 12 : 10.5,
+        height: 1.45,
+        fontWeight: FontWeight.w600,
+        letterSpacing: amharic ? 0.6 : 2.4,
+        color: c.inkFaint,
+      );
 
   static TextStyle body(NorchaColors c) => TextStyle(
     fontFamily: NorchaTypeFace.body, fontSize: 15, height: 1.45,
@@ -272,6 +302,16 @@ class NorchaType {
   static TextStyle amharicText(NorchaColors c) => TextStyle(
     fontFamily: NorchaTypeFace.amharic, fontSize: 15, height: 1.5,
     fontWeight: FontWeight.w400, color: c.ink,
+  );
+
+  /// Same intent as [sectionLabel], for callers that build their own style.
+  /// Picks the family from the script rather than assuming Latin.
+  static TextStyle forText(NorchaColors c, bool amharic) => TextStyle(
+    fontFamily: amharic ? NorchaTypeFace.amharic : NorchaTypeFace.body,
+    fontSize: amharic ? 14 : 13,
+    height: 1.5,
+    fontWeight: FontWeight.w400,
+    color: c.ink,
   );
 
   static TextStyle mono(NorchaColors c) => TextStyle(
