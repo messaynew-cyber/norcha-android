@@ -217,34 +217,59 @@ void main() {
           reason: 'the overlay hid or replaced the page');
     });
 
-    testWidgets('shows the build tag when there are no errors', (tester) async {
+    // 🔴 THE OVERLAY IS OFF BY DEFAULT NOW, AND THESE TWO TESTS SAID WHY IT
+    // USED TO BE ON.
+    //
+    // They asserted that the banner DRAWS — the build tag, and a recorded
+    // error, both visible on screen. That was the contract when the Amharic
+    // fault was still undiagnosed and a screenshot had to carry its own
+    // evidence. It is not the contract any more: the instrument came off the
+    // customer's screen once it had done its job.
+    //
+    // So they are rewritten rather than deleted. The thing worth protecting
+    // was never the pixels — it is that an error is CAPTURED and remains
+    // reachable. That is still true, and still asserted below.
+    testWidgets('records a build tag and does not draw over the page',
+        (tester) async {
       await tester.pumpWidget(MaterialApp(
         builder: (context, child) =>
             DiagnosticHost(child: child ?? const SizedBox.shrink()),
-        home: const Scaffold(body: Text('x')),
+        home: const Scaffold(body: Text('PAGE CONTENT')),
       ));
       await tester.pump();
-      // The banner carries the build tag; the expanded body also says
-      // "no errors recorded this session". Two matches is correct — match the
-      // one that carries the identity.
-      expect(find.textContaining('no errors ·'), findsOneWidget,
-          reason: 'the banner must always show the build identity');
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('PAGE CONTENT'), findsOneWidget,
+          reason: 'the overlay must not replace or hide the page');
+      // Nothing of the instrument is painted. NorchaVersion still exists and
+      // the About page still reads it; it is simply not stamped over the UI.
+      expect(find.textContaining('no errors ·'), findsNothing,
+          reason: 'the banner must not be on screen in a release build');
     });
 
-    testWidgets('surfaces a recorded error instead of swallowing it',
+    testWidgets('a recorded error is captured even with nothing drawn',
         (tester) async {
       Diagnostics.clear();
       Diagnostics.record('TEST', 'something went wrong');
+
       await tester.pumpWidget(MaterialApp(
         builder: (context, child) =>
             DiagnosticHost(child: child ?? const SizedBox.shrink()),
         home: const Scaffold(body: Text('x')),
       ));
       await tester.pump();
-      expect(find.textContaining('1 ERROR'), findsOneWidget);
-      expect(find.textContaining('something went wrong'), findsOneWidget,
-          reason: 'a recorded error must appear on screen, not only in a log');
+
+      // Not painted…
+      expect(find.textContaining('1 ERROR'), findsNothing);
+      expect(find.textContaining('something went wrong'), findsNothing);
+      // …but not lost. This is the part that must never regress: silencing the
+      // overlay is a UI decision, and it must not silence the record.
+      expect(Diagnostics.errors, isNotEmpty,
+          reason: 'recording must survive the overlay being switched off');
+      expect(Diagnostics.errors.join(), contains('something went wrong'));
+      expect(Diagnostics.hasErrors, isTrue);
       Diagnostics.clear();
+      expect(Diagnostics.errors, isEmpty);
     });
   });
 
