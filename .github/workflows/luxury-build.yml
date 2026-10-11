@@ -200,8 +200,31 @@ jobs:
           # The relay pulls the file itself rather than the runner pushing it:
           # the VPS is on a fast link and this avoids pushing 55MB back up out
           # of a CI runner. It then regenerates its own index. Idempotent.
+          # 🔴 TWO TRAPS HERE, BOTH COST REAL CI RUNS.
+          #
+          # 1. DO NOT USE `-i <(printf ...)`. Process substitution hands ssh a
+          #    /dev/fd/N path, and ssh re-executes itself before it opens the
+          #    identity file — by which point the descriptor is gone. It fails
+          #    with "Identity file /dev/fd/63 not accessible" and then
+          #    "Permission denied (publickey)", which reads exactly like a bad
+          #    key and is not one.
+          #
+          # 2. THE SECRET IS BASE64. A multi-line PEM does not survive the JSON
+          #    the secrets API wants — newlines get escaped or eaten, and the
+          #    result is a key file that parses but is not the key.
+          umask 077
+          KEYFILE="$(mktemp)"
+          printf '%s' "$RELAY_KEY" | base64 -d > "$KEYFILE"
+          trap 'rm -f "$KEYFILE"' EXIT
+
+          # Fail EARLY and loudly on a malformed key, rather than reporting a
+          # confusing publickey denial from the far end. A key that cannot
+          # derive its own public half is not a key.
+          ssh-keygen -y -f "$KEYFILE" > /dev/null 2>&1 \
+            || { echo "::error::NORCHA_RELAY_KEY is not a valid private key after base64 decode"; exit 1; }
+
           ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 \
-              -i <(printf '%s' "$RELAY_KEY") ubuntu@129.80.112.9 "
+              -o IdentitiesOnly=yes -i "$KEYFILE" ubuntu@129.80.112.9 "
                 set -e
                 cd /home/ubuntu/norcha-relay
                 curl -sL --max-time 300 -o '$NAME' \
