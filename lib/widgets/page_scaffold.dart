@@ -112,7 +112,7 @@ class _PageScaffoldState extends State<PageScaffold> {
                       // is proportionally far too large on a phone — and at a
                       // fixed stroke ratio, proportionally heavier too, which
                       // made the doubled outline much more obvious in the app.
-                      size: GhostNumeral.sizeFor(context),
+                      size: 250,
                     ),
                   ],
                 ),

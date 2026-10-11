@@ -75,27 +75,6 @@ class GhostNumeral extends StatelessWidget {
     this.size = 240,
   });
 
-  /// 🔴 THE NUMERAL STEPS DOWN ON A PHONE, EXACTLY AS IT DOES ON THE WEBSITE.
-  ///
-  /// style.css does this at max-width 640px:
-  ///
-  ///     .ghost-num { font-size: clamp(96px, 28vw, 170px); opacity: .2 }
-  ///
-  /// with the note that on a phone it "steps back rather than competing with
-  /// the copy", and that at 412px the glyph box was overflowing the viewport.
-  ///
-  /// The app had no equivalent, so a flat 250px numeral was drawn on a device
-  /// only ~400dp wide — proportionally far larger than the site's ~300px on a
-  /// desktop. A bigger glyph is not just bigger: at a fixed stroke ratio the
-  /// outline is proportionally heavier too, which is part of why the doubling
-  /// was so much more obvious in the app than on the web.
-  ///
-  /// 28% of the shorter side reproduces the site's 28vw, clamped to the same
-  /// 96-170 band.
-  static double sizeFor(BuildContext context) {
-    final shortest = MediaQuery.sizeOf(context).shortestSide;
-    return (shortest * 0.28).clamp(96.0, 170.0);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +149,7 @@ class GhostNumeral extends StatelessWidget {
                     // reference implementation, not from reasoning about it.
                     // Two of the three numbers this line has held were invented.
                     // This one was measured off the site that works.
-                    strokeWidth: size * 0.0065,
+                    strokeWidth: 1.6,
                   ),
           ),
         ),
