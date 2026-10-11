@@ -14,9 +14,13 @@ on:
     branches:
       - main
       - pricing-real
-      - 'theme-*'
-      - 'phase1-*'
-      - 'phase2-*'
+      # Any working branch — see the note in test.yml. Enumerated lists rot.
+      - 'fix-*'
+      - 'fix/**'
+      - 'phase*'
+      - 'theme*'
+      - 'feat-*'
+      - 'feat/**'
     paths-ignore:
       - '**.md'
 
