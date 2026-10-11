@@ -17,7 +17,17 @@ on:
     # list, which meant the branch holding all the current work only ever
     # built when a human remembered to dispatch it by hand. That is how a
     # fix ends up pushed, green, and still not on the phone.
-    branches: [main, pricing-real, phase2-api]
+    # Wildcards as well as names: a new working branch must never be invisible
+    # to CI just because nobody remembered to enumerate it. See test.yml.
+    branches:
+      - main
+      - pricing-real
+      - 'fix-*'
+      - 'fix/**'
+      - 'phase*'
+      - 'theme*'
+      - 'feat-*'
+      - 'feat/**'
   pull_request:
   workflow_dispatch:
 
@@ -149,3 +159,55 @@ jobs:
             out/SHA256SUMS.txt
           draft: false
           prerelease: true
+
+      # ───────────────────────────────────────────────────────────────────────
+      # 🔴 MIRROR TO THE RELAY, BECAUSE GITHUB IS SLOW FROM ADDIS.
+      #
+      # Measured 2026-10-11 from the phone: a github.com release download ran at
+      # 17 KB/s — 53 minutes for one APK — while the same phone pulled 2.8 MB/s
+      # from Cloudflare and 3.8 MB/s from the relay on adwaaudit.com. GitHub is
+      # the bottleneck, not the connection. So the build publishes itself to
+      # somewhere fast and nobody waits, and nobody hand-copies an APK again.
+      #
+      # The relay serves https://adwaaudit.com/norcha/ from the adwa_frontend
+      # container's web root. It has its own README in /home/ubuntu/norcha-relay.
+      #
+      # ⚠️ REQUIRES THE SECRET `NORCHA_RELAY_KEY`. The step SKIPS cleanly when it
+      # is absent — a missing secret must never fail a build that otherwise
+      # produced a good APK. Silent skip, never silent failure.
+      - name: Mirror to the relay (adwaaudit.com/norcha)
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pricing-real') && env.RELAY_KEY != ''
+        env:
+          RELAY_KEY: ${{ secrets.NORCHA_RELAY_KEY }}
+        run: |
+          set -euo pipefail
+          NAME="norcha-print-v${{ steps.ver.outputs.version }}-b${{ github.run_number }}.apk"
+          TAG="v${{ steps.ver.outputs.version }}-b${{ github.run_number }}"
+          echo "mirroring $NAME from $TAG"
+
+          # The relay pulls the file itself rather than the runner pushing it:
+          # the VPS is on a fast link and this avoids pushing 55MB back up out
+          # of a CI runner. It then regenerates its own index. Idempotent.
+          ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 \
+              -i <(printf '%s' "$RELAY_KEY") ubuntu@129.80.112.9 "
+                set -e
+                cd /home/ubuntu/norcha-relay
+                curl -sL --max-time 300 -o '$NAME' \
+                  'https://github.com/messaynew-cyber/norcha-android/releases/download/$TAG/norcha-luxury-${{ github.run_number }}.apk'
+                python3 generate_index.py
+                CT=\$(sudo docker ps -q --filter publish=80)
+                sudo docker cp '$NAME' \$CT:/usr/share/nginx/html/norcha/
+                sudo docker cp index.json \$CT:/usr/share/nginx/html/norcha/
+                echo MIRRORED '$NAME'
+              "
+
+      - name: Where to download it
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pricing-real')
+        run: |
+          {
+            echo "### Downloads"
+            echo ""
+            echo "- **Fast (relay):** https://adwaaudit.com/norcha/"
+            echo "- Release: \`v${{ steps.ver.outputs.version }}-b${{ github.run_number }}\`"
+            echo "- Version stamped into the APK: \`${{ steps.ver.outputs.stamp }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

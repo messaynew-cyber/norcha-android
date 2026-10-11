@@ -10,9 +10,18 @@ on:
     branches:
       - main
       - pricing-real
-      - 'theme-*'
-      - 'phase1-*'
-      - 'phase2-*'
+      # 🔴 ANY working branch, not an enumerated list.
+      # This used to be an explicit set ('theme-*', 'phase1-*', 'phase2-*') and
+      # every new branch name was invisible to CI until someone remembered to
+      # add it. A fix branch was pushed, reported as "PR open", and never tested
+      # at all — because fix/* matched nothing here. Wildcards mean a new branch
+      # is tested on push, with no memory required.
+      - 'fix-*'
+      - 'fix/**'
+      - 'phase*'
+      - 'theme*'
+      - 'feat-*'
+      - 'feat/**'
   pull_request:
   workflow_dispatch:
 
