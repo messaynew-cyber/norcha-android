@@ -176,7 +176,19 @@ jobs:
       # is absent — a missing secret must never fail a build that otherwise
       # produced a good APK. Silent skip, never silent failure.
       - name: Mirror to the relay (adwaaudit.com/norcha)
-        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pricing-real') && env.RELAY_KEY != ''
+        # 🔴 THE GATE IS `is not a pull request`, NOT A BRANCH LIST.
+        #
+        # It used to name main and pricing-real explicitly, which meant the step
+        # SKIPPED on every other branch — and a skipped step is reported as a
+        # SUCCESS, so it looked like the mirror was working when it had never
+        # run once. That is the worst failure mode available: a green tick over
+        # nothing.
+        #
+        # Mirroring is harmless from any branch (it publishes an APK that was
+        # built and released by this same run), so the only real condition is
+        # that a key exists. `github.event_name != 'pull_request'` keeps fork PRs
+        # out, where secrets are unavailable anyway.
+        if: github.event_name != 'pull_request' && env.RELAY_KEY != ''
         env:
           RELAY_KEY: ${{ secrets.NORCHA_RELAY_KEY }}
         run: |
@@ -215,7 +227,9 @@ jobs:
               "
 
       - name: Where to download it
-        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/pricing-real')
+        # Same reasoning as the mirror gate: a skipped step reports as success,
+        # so a branch list here just hides the summary on working branches.
+        if: always() && github.event_name != 'pull_request'
         run: |
           {
             echo "### Downloads"
