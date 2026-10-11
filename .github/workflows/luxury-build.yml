@@ -188,8 +188,21 @@ jobs:
           # The relay pulls the file itself rather than the runner pushing it:
           # the VPS is on a fast link and this avoids pushing 55MB back up out
           # of a CI runner. It then regenerates its own index. Idempotent.
+          # 🔴 DO NOT USE `-i <(printf ...)`. Process substitution hands ssh a
+          # /dev/fd/N path, and ssh re-executes itself before it opens the
+          # identity file — by which point the descriptor is gone. It fails with
+          # "Identity file /dev/fd/63 not accessible" and then "Permission
+          # denied (publickey)", which reads exactly like a bad key and is NOT
+          # one. Two CI runs were spent on that misdiagnosis.
+          #
+          # Write a real file, chmod it, use it, delete it. Boring and works.
+          umask 077
+          KEYFILE="$(mktemp)"
+          printf '%s\n' "$RELAY_KEY" > "$KEYFILE"
+          trap 'rm -f "$KEYFILE"' EXIT
+
           ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 \
-              -i <(printf '%s' "$RELAY_KEY") ubuntu@129.80.112.9 "
+              -o IdentitiesOnly=yes -i "$KEYFILE" ubuntu@129.80.112.9 "
                 set -e
                 cd /home/ubuntu/norcha-relay
                 curl -sL --max-time 300 -o '$NAME' \
