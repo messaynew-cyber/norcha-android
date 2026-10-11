@@ -56,6 +56,30 @@ class Diagnostics {
 /// Draws the banner over [child]. Mount this from MaterialApp's `builder`.
 class DiagnosticHost extends StatefulWidget {
   final Widget child;
+
+  /// 🔴 DEBUG MODE. OFF BY DEFAULT.
+  ///
+  /// The banner was built to solve a real problem: the Amharic fault was
+  /// diagnosed wrong twice by reading source, so the app was given a way to
+  /// report on itself. It did that job — the trace that finally cracked it
+  /// (`Null check operator used on a null value`, text_field.dart) came out of
+  /// this banner.
+  ///
+  /// The job is done. The banner is a development instrument and it has no
+  /// business on the screen of a shop counter, so rendering is now opt-in.
+  ///
+  /// ⚠️ RECORDING IS UNCHANGED AND MUST STAY. `Diagnostics.record`, the Flutter
+  /// error hook in main.dart, and `PlatformDispatcher.instance.onError` all keep
+  /// running. Errors are still captured, still kept, still printed to the
+  /// console, and still available to anything that reads `Diagnostics.errors` —
+  /// there is simply no overlay drawing them over the customer's quote.
+  ///
+  /// To bring the banner back for one build, flip this to true. That is the
+  /// whole cost, which is the point: an instrument you cannot re-arm without
+  /// another fix is an instrument you stop using.
+  static const bool debugMode =
+      bool.fromEnvironment('NORCHA_DEBUG_BANNER', defaultValue: false);
+
   const DiagnosticHost({super.key, required this.child});
 
   @override
@@ -70,6 +94,12 @@ class _DiagnosticHostState extends State<DiagnosticHost> {
 
   @override
   Widget build(BuildContext context) {
+    // Nothing to draw and nothing to listen to: hand the child straight back.
+    // Returning `child` rather than an empty Stack keeps the tree identical to
+    // what it would be with no DiagnosticHost at all, so a release build cannot
+    // differ from a debug-flag-off build in layout or paint order.
+    if (!DiagnosticHost.debugMode) return widget.child;
+
     return ValueListenableBuilder<int>(
       valueListenable: Diagnostics.revision,
       builder: (context, _, __) {
