@@ -126,7 +126,6 @@ class _QuotePageState extends State<QuotePage> {
       chapter: 2,
       eyebrowKey: 'quote.eyebrow',
       titleKey: 'quote.title',
-      ghostStyle: GhostStyle.outline,
       trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       bottomBar: _TotalBar(
         total: q.total,

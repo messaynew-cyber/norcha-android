@@ -38,7 +38,6 @@ class HomePage extends StatelessWidget {
       chapter: 1,
       eyebrowKey: 'home.eyebrow',
       titleKey: 'home.title',
-      ghostStyle: GhostStyle.soft,
       telafi: true,
       trailing: HeaderControls(themes: themes, langs: langs),
       children: [

@@ -152,7 +152,6 @@ class _UploadPageState extends State<UploadPage> {
       chapter: 4,
       eyebrowKey: 'upload.eyebrow',
       titleKey: 'upload.title',
-      ghostStyle: GhostStyle.soft,
       trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       children: [
         Padding(

@@ -39,7 +39,6 @@ class AboutPage extends StatelessWidget {
       chapter: 5,
       eyebrowKey: 'studio.eyebrow',
       titleKey: 'studio.title',
-      ghostStyle: GhostStyle.outline,
       telafi: true,
       trailing: HeaderControls(themes: themes, langs: langs),
       children: [

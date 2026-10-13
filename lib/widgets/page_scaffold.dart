@@ -32,7 +32,6 @@ class PageScaffold extends StatefulWidget {
   /// Optional pinned bar (the quote page's total). Excluded from the scroll.
   final Widget? bottomBar;
 
-  final GhostStyle ghostStyle;
   final bool ghostLeft;
 
   const PageScaffold({
@@ -43,7 +42,6 @@ class PageScaffold extends StatefulWidget {
     required this.children,
     this.trailing,
     this.bottomBar,
-    this.ghostStyle = GhostStyle.soft,
     this.ghostLeft = false,
     this.telafi = false,
   });
@@ -104,15 +102,20 @@ class _PageScaffoldState extends State<PageScaffold> {
                   children: [
                     GhostNumeral(
                       numeral: GeezNumeral.at(widget.chapter),
-                      style: widget.ghostStyle,
                       left: widget.ghostLeft,
                       // 🔴 STEPS DOWN ON A PHONE, AS THE WEBSITE DOES.
-                      // Was a flat 250. The site clamps to 28vw / max 170px at
-                      // max-width 640px because a numeral sized for a desktop
-                      // is proportionally far too large on a phone — and at a
-                      // fixed stroke ratio, proportionally heavier too, which
-                      // made the doubled outline much more obvious in the app.
-                      size: 250,
+                      // The site clamps to clamp(96px, 28vw, 170px) below 640px,
+                      // and 120px below 860px. This app drew a flat 250 — larger
+                      // than the widest the site ever goes, on the narrowest
+                      // screen it supports. The comment above used to claim it
+                      // "steps down" while the value never did; on a stroked
+                      // glyph that oversize made the doubling worse.
+                      //
+                      // The stroke is gone (see ghost_numerals.dart), but the
+                      // oversize was never justified by the outline alone — a
+                      // numeral built for a 1440px desktop was simply landing on
+                      // a 412px phone. 170 is the site's own phone ceiling.
+                      size: 170,
                     ),
                   ],
                 ),

@@ -72,7 +72,6 @@ class _OrderPageState extends State<OrderPage> {
       chapter: 3,
       eyebrowKey: 'order.eyebrow',
       titleKey: 'order.title',
-      ghostStyle: GhostStyle.outline,
       ghostLeft: true,
       trailing: HeaderControls(themes: widget.themes, langs: widget.langs),
       children: [
