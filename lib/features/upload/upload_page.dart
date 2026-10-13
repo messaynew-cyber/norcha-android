@@ -24,7 +24,6 @@ import '../../core/pricing.dart';
 import '../../services/norcha_api.dart';
 import '../../services/photo_upload.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
 import '../../widgets/loading_mark.dart';

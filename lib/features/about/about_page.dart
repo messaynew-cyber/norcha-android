@@ -18,7 +18,6 @@ import '../../core/lang.dart';
 import '../../core/pricing.dart';
 import '../../core/version.dart';
 import '../../theme/app_theme.dart';
-import '../../theme/ghost_numerals.dart';
 import '../../theme/theme_controller.dart';
 import '../../widgets/cloth_surface.dart';
 import '../../widgets/page_scaffold.dart';
